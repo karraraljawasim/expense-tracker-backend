@@ -13,9 +13,5 @@ export const loginSchema = z.object({
   password: z.string().min(8, "Too short password"),
 });
 
-export const refreshSchema = z.object({
-  refershToken: z.string().optional(),
-});
-
 export type RegisterUserRequestDto = z.infer<typeof registerSchema>;
 export type LoginUserRequestDto = z.infer<typeof loginSchema>;
