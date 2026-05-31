@@ -25,3 +25,13 @@ export type IExpense = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type IGetAllExpensesFilter = {
+  categoryId?: string;
+  date?: { $gte?: Date; $lte?: Date };
+  amount?: { $gte?: number; $lte?: number };
+  currency?: string;
+  isRecurring?: boolean;
+  userId: string;
+  "recurrence.parentId"?: null;
+};

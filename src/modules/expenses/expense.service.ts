@@ -7,11 +7,18 @@ import {
 import { BudgetAlert } from "../BudgetAlert/budgetAlert.modle.js";
 import Categories from "../categories/category.model.js";
 import { Expense } from "./expense.modle.js";
-import { IExpense } from "./expense.types.js";
-import { CreateExpenseRequestDto } from "./expense.validation.js";
+import { IExpense, IGetAllExpensesFilter } from "./expense.types.js";
+import {
+  CreateExpenseRequestDto,
+  GetAllExpensesQueryDto,
+} from "./expense.validation.js";
 
 export interface IExpenseService {
   create: (input: CreateExpenseRequestDto, userId: string) => Promise<IExpense>;
+  getAll: (
+    query: GetAllExpensesQueryDto,
+    userId: string,
+  ) => Promise<IExpense[]>;
 }
 
 export class ExpenseService implements IExpenseService {
@@ -119,7 +126,7 @@ export class ExpenseService implements IExpenseService {
           await BudgetAlert.create({
             userId: userId,
             categoryId: input.categoryId,
-            month: startOfMonth.toISOString(),
+            month: startOfMonth.toISOString().slice(0, 7),
             budgetLimit: budgetLimit,
             spentAmount: totalSpent,
             percentage: percentage,
@@ -130,5 +137,52 @@ export class ExpenseService implements IExpenseService {
     }
 
     return newExpense;
+  }
+
+  async getAll(query: GetAllExpensesQueryDto, userId: string) {
+    if (query.categoryId) {
+      const category = await Categories.findById(query.categoryId);
+      if (!category || category.userId.toString() !== userId) {
+        throw new NotFoundError("Category");
+      }
+    }
+
+    const filterObject: IGetAllExpensesFilter = {
+      userId: userId,
+    };
+
+    if (query.categoryId) {
+      filterObject.categoryId = query.categoryId;
+    }
+
+    if (query.currency) {
+      filterObject.currency = query.currency;
+    }
+
+    if (query.maxAmount !== undefined || query.minAmount !== undefined) {
+      filterObject.amount = {};
+
+      if (query.minAmount !== undefined) {
+        filterObject.amount.$gte = query.minAmount;
+      }
+      if (query.maxAmount !== undefined) {
+        filterObject.amount.$lte = query.maxAmount;
+      }
+    }
+    if (query.isRecurring !== undefined) {
+      filterObject.isRecurring = query.isRecurring;
+
+      if (query.isRecurring === true) {
+        filterObject["recurrence.parentId"] = null;
+      }
+    }
+
+    filterObject.date = {};
+    filterObject.date.$gte = new Date(query.from);
+    filterObject.date.$lte = new Date(query.to);
+
+    const expensess = await Expense.find(filterObject);
+
+    return expensess;
   }
 }

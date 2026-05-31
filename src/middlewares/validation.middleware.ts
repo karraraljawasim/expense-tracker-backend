@@ -15,7 +15,12 @@ export const validate = <T extends ZodSchema>(
       return;
     }
 
-    req[location] = result.data as z.infer<T>;
-    next();
+    if (location === "query") {
+      req.validateQuery = result.data as z.infer<T>;
+      next();
+    } else {
+      req[location] = result.data as z.infer<T>;
+      next();
+    }
   };
 };

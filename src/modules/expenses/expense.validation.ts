@@ -21,4 +21,50 @@ export const createExpenseSchema = z.object({
   attachmentUrl: z.string().nullable().default(null),
 });
 
+export const getAllExpensesQuerySchema = z.object({
+  from: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, {
+      message: "Must be in YYYY-MM format",
+    })
+    .optional()
+    .default(() => {
+      const now = new Date();
+      const startOfCurrentMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        1,
+      );
+      return startOfCurrentMonth.toISOString();
+    }),
+  to: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, {
+      message: "Must be in YYYY-MM format",
+    })
+    .optional()
+    .default(() => {
+      const now = new Date();
+      const startOfNextMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        1,
+      );
+      return startOfNextMonth.toISOString();
+    }),
+  categoryId: z
+    .string()
+    .refine((vlaue) => Types.ObjectId.isValid(vlaue), {
+      message: "Invalid object id",
+    })
+    .optional(),
+  currency: z.string().max(3).optional(),
+  isRecurring: z
+    .preprocess((value) => value === "true" || value === true, z.boolean())
+    .optional(),
+  minAmount: z.coerce.number().optional(),
+  maxAmount: z.coerce.number().optional(),
+});
+
 export type CreateExpenseRequestDto = z.infer<typeof createExpenseSchema>;
+export type GetAllExpensesQueryDto = z.infer<typeof getAllExpensesQuerySchema>;
