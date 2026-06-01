@@ -88,6 +88,10 @@ const expenseSchema = new Schema<IExpense>(
       type: String,
       default: null,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

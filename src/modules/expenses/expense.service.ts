@@ -34,6 +34,11 @@ export interface IExpenseService {
     input: UpdateExpenseRequestDto,
     userId: string,
   ) => Promise<IExpense>;
+  softDelete: (
+    expenseId: string,
+    userId: string,
+    deleteScope?: "this" | "all" | "thisAndFuture",
+  ) => Promise<void>;
 }
 
 export class ExpenseService implements IExpenseService {
@@ -330,10 +335,125 @@ export class ExpenseService implements IExpenseService {
     throw new AppError("Update this expense not alowed");
   }
 
-  async #checkBudgetAlert(userId: string, categoryId: string) {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  async softDelete(
+    expenseId: string,
+    userId: string,
+    deleteScope?: "this" | "all" | "thisAndFuture",
+  ) {
+    const expense = await Expense.findOne({ _id: expenseId });
+    if (!expense) {
+      throw new NotFoundError("Expense");
+    }
+
+    if (
+      expense.isRecurring === false &&
+      expense.recurrence?.parentId === null
+    ) {
+      await Expense.findByIdAndUpdate(expenseId, {
+        isDeleted: true,
+      });
+
+      await this.#checkBudgetAlert(userId, expense.categoryId.toString());
+      return;
+    }
+
+    if (expense.isRecurring && expense.recurrence?.parentId !== null) {
+      await Expense.findByIdAndUpdate(expenseId, {
+        isDeleted: true,
+      });
+
+      await this.#checkBudgetAlert(
+        userId,
+        expense.categoryId.toString(),
+        expense.date,
+      );
+      return;
+    }
+
+    if (expense.isRecurring && expense.recurrence?.parentId === null) {
+      if (!deleteScope) {
+        throw new AppError(
+          "Delete scope is required in  deleted recrring expense",
+        );
+      }
+
+      if (deleteScope === "this") {
+        await Expense.findByIdAndUpdate(expenseId, {
+          isDeleted: true,
+          "recurrence.endDate": new Date(),
+        });
+
+        return;
+      }
+
+      if (deleteScope === "thisAndFuture") {
+        await Expense.findByIdAndUpdate(expenseId, {
+          isDeleted: true,
+        });
+
+        await Expense.updateMany(
+          {
+            "recurrence.parentId": expenseId,
+            date: { $gte: new Date() },
+          },
+          {
+            isDeleted: true,
+          },
+        );
+
+        return;
+      }
+
+      if (deleteScope === "all") {
+        await Expense.findByIdAndUpdate(expenseId, {
+          isDeleted: true,
+        });
+
+        const copiesTodelete = await Expense.find({
+          "recurrence.parentId": expenseId,
+          isDeleted: true,
+        });
+
+        await Expense.updateMany(
+          {
+            "recurrence.parentId": expenseId,
+          },
+          {
+            isDeleted: true,
+          },
+        );
+
+        const uniqueMonths = [
+          ...new Set(
+            copiesTodelete.map((copy) => copy.date.toISOString().slice(0, 7)),
+          ),
+        ];
+
+        for (const month of uniqueMonths) {
+          await this.#checkBudgetAlert(
+            userId,
+            expense.categoryId.toString(),
+            new Date(month),
+          );
+        }
+
+        return;
+      }
+    }
+  }
+
+  async #checkBudgetAlert(
+    userId: string,
+    categoryId: string,
+    date: Date = new Date(),
+  ) {
+    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const startOfNextMonth = new Date(
+      date.getFullYear(),
+      date.getMonth() + 1,
+      1,
+    );
+    const month = startOfMonth.toISOString().slice(0, 7);
 
     const category = await Categories.findById(categoryId);
     if (!category) {
@@ -346,6 +466,7 @@ export class ExpenseService implements IExpenseService {
           userId: new mongoose.Types.ObjectId(userId),
           categoryId: new mongoose.Types.ObjectId(categoryId),
           date: { $gte: startOfMonth, $lt: startOfNextMonth },
+          isDeleted: false,
         },
       },
       {
@@ -359,29 +480,59 @@ export class ExpenseService implements IExpenseService {
     const totalSpent = result.length > 0 ? result[0].totalSpent : 0;
     const budgetLimit = category.budgetLimit || 0;
 
-    if (budgetLimit > 0) {
-      const percentage = (totalSpent / budgetLimit) * 100;
+    if (budgetLimit === 0) return;
 
-      if (percentage >= 80) {
-        const alertType = percentage >= 100 ? "exceeded" : "warning";
+    const percentage = (totalSpent / budgetLimit) * 100;
 
-        const budgetAlertExist = await BudgetAlert.exists({
-          userId: userId,
-          categoryId: categoryId,
-          alertType: alertType,
-          createdAt: { $gte: startOfMonth, $lt: startOfNextMonth },
-        });
+    if (percentage < 80) {
+      await BudgetAlert.deleteMany({ userId, categoryId, month });
+      return;
+    }
 
-        if (!budgetAlertExist) {
-          await BudgetAlert.create({
-            userId: userId,
-            categoryId: categoryId,
-            month: startOfMonth.toISOString().slice(0, 7),
-            budgetLimit: budgetLimit,
-            spentAmount: totalSpent,
-            percentage: percentage,
-            alertType: alertType,
+    if (percentage >= 80 && percentage < 100) {
+      await BudgetAlert.deleteMany({
+        userId,
+        categoryId,
+        month,
+        alertType: "exceeded",
+      });
+
+      const alertsToCheck: Array<{
+        threshold: number;
+        alertType: "warning" | "exceeded";
+      }> = [
+        { threshold: 80, alertType: "warning" },
+        { threshold: 100, alertType: "exceeded" },
+      ];
+
+      for (const { threshold, alertType } of alertsToCheck) {
+        if (percentage >= threshold) {
+          const existingAlert = await BudgetAlert.findOne({
+            userId,
+            categoryId,
+            alertType,
+            month,
           });
+
+          if (!existingAlert) {
+            await BudgetAlert.create({
+              userId,
+              month,
+              categoryId,
+              spentAmount: totalSpent,
+              percentage,
+              budgetLimit,
+              alertType,
+              triggered: true,
+              triggeredAt: new Date(),
+            });
+          } else {
+            await BudgetAlert.findByIdAndUpdate(existingAlert._id, {
+              spentAmount: totalSpent,
+              percentage,
+              triggeredAt: new Date(),
+            });
+          }
         }
       }
     }

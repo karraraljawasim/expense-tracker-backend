@@ -2,7 +2,10 @@ import z from "zod";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ExpenseService } from "./expense.service.js";
-import { getAllExpensesQuerySchema } from "./expense.validation.js";
+import {
+  expenseSoftDeleteQuerySchema,
+  getAllExpensesQuerySchema,
+} from "./expense.validation.js";
 
 export class ExpenseController {
   readonly #expenseService: ExpenseService;
@@ -43,5 +46,18 @@ export class ExpenseController {
     );
 
     ApiResponse.success(res, data);
+  });
+
+  softDelete = asyncHandler(async (req, res) => {
+    const query = req.validateQuery as z.infer<
+      typeof expenseSoftDeleteQuerySchema
+    >;
+    await this.#expenseService.softDelete(
+      req.params.expenseId as string,
+      req.user!.id,
+      query?.deleteScope,
+    );
+
+    ApiResponse.noContent(res);
   });
 }

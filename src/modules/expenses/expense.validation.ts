@@ -85,6 +85,10 @@ export const updateExpenseSchema = z.object({
   editScope: z.enum(["all", "thisAndFuture", "this"]).optional(),
 });
 
+export const expenseSoftDeleteQuerySchema = z.object({
+  deleteScope: z.enum(["all", "this", "thisAndFuture"]).optional(),
+});
+
 export type CreateExpenseRequestDto = z.infer<typeof createExpenseSchema>;
 export type GetAllExpensesQueryDto = z.infer<typeof getAllExpensesQuerySchema>;
 export type UpdateExpenseRequestDto = z.infer<typeof updateExpenseSchema>;
