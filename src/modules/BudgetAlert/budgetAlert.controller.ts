@@ -2,7 +2,10 @@ import { z } from "zod";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { IBudgetAlertService } from "./budgetAlert.service.js";
-import { getAllTriggeredAlertsQueryschema } from "./budgetAlert.validation.js";
+import {
+  getAllTriggeredAlertsQueryschema,
+  getHistoryBudgetAlertByMonthQuerySchema,
+} from "./budgetAlert.validation.js";
 
 export class BudgetAlertController {
   readonly #budgetAlertService: IBudgetAlertService;
@@ -43,6 +46,18 @@ export class BudgetAlertController {
   markAllBudgetAlertAsRead = asyncHandler(async (req, res) => {
     const data = await this.#budgetAlertService.markAllBudgetAlertAsRead(
       req.user!.id,
+    );
+
+    ApiResponse.success(res, data);
+  });
+
+  getHistoryBudgetAlertByMonth = asyncHandler(async (req, res) => {
+    const query = req.validateQuery as z.infer<
+      typeof getHistoryBudgetAlertByMonthQuerySchema
+    >;
+    const data = await this.#budgetAlertService.getHistoryBudgetAlertByMonth(
+      req.user!.id,
+      query.month,
     );
 
     ApiResponse.success(res, data);

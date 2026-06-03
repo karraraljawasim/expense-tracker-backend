@@ -6,6 +6,7 @@ import { validate } from "../../middlewares/validation.middleware.js";
 import {
   budgetAlertIdPramseSchema,
   getAllTriggeredAlertsQueryschema,
+  getHistoryBudgetAlertByMonthQuerySchema,
 } from "./budgetAlert.validation.js";
 
 const budgetAlertController = new BudgetAlertController(
@@ -37,3 +38,11 @@ budgetAlertRouter
 budgetAlertRouter
   .route("/alerts/read-all")
   .patch(authenticate, budgetAlertController.markAllBudgetAlertAsRead);
+
+budgetAlertRouter
+  .route("/history")
+  .get(
+    authenticate,
+    validate(getHistoryBudgetAlertByMonthQuerySchema, "query"),
+    budgetAlertController.getHistoryBudgetAlertByMonth,
+  );
