@@ -35,7 +35,7 @@ export const getAllExpensesQuerySchema = z.object({
         now.getMonth() + 1,
         1,
       );
-      return startOfCurrentMonth.toISOString();
+      return startOfCurrentMonth.toISOString().slice(0, 7);
     }),
   to: z
     .string()
@@ -50,7 +50,7 @@ export const getAllExpensesQuerySchema = z.object({
         now.getMonth() + 1,
         1,
       );
-      return startOfNextMonth.toISOString();
+      return startOfNextMonth.toISOString().slice(0, 7);
     }),
   categoryId: z
     .string()
