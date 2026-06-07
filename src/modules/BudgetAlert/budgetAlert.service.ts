@@ -3,15 +3,19 @@ import { BudgetAlert } from "./budgetAlert.modle.js";
 import Categories from "../categories/category.model.js";
 import { Expense } from "../expenses/expense.modle.js";
 import { IBudgetAlert, MonthlyBudgetResponse } from "./budgetAlert.types.js";
-import { GetAllTriggeredAlertsQueryDto } from "./budgetAlert.validation.js";
+import {
+  GetAllTriggeredAlertsQueryDto,
+  GetHistoryBudgetAlertByMonthQuery,
+} from "./budgetAlert.validation.js";
 import { AppError, NotFoundError } from "../../utils/AppError.js";
+import { PaginationResponseDto } from "../../types/pagination.js";
 
 export interface IBudgetAlertService {
   getMonthlyBudgetStatus: (userId: string) => Promise<MonthlyBudgetResponse>;
   getAllTriggeredAlerts: (
     userId: string,
     query: GetAllTriggeredAlertsQueryDto,
-  ) => Promise<IBudgetAlert[]>;
+  ) => Promise<PaginationResponseDto<IBudgetAlert>>;
   markBudgetAlertAsRead: (
     userId: string,
     budgetAlertId: string,
@@ -21,7 +25,7 @@ export interface IBudgetAlertService {
   ) => Promise<{ countUpdated: number }>;
   getHistoryBudgetAlertByMonth: (
     userId: string,
-    month: string,
+    query: GetHistoryBudgetAlertByMonthQuery,
   ) => Promise<MonthlyBudgetResponse>;
 }
 export class BudgetAlertService implements IBudgetAlertService {
@@ -93,9 +97,7 @@ export class BudgetAlertService implements IBudgetAlertService {
           budgetLimit,
           totalSpent,
           percentage,
-          remaining: percentage
-            ? Math.round(totalSpent / percentage)
-            : totalSpent,
+          remaining: budgetLimit - totalSpent,
           status,
           alerts: {
             warning: budgetAlert ? budgetAlert.alertType === "warning" : false,
@@ -147,20 +149,56 @@ export class BudgetAlertService implements IBudgetAlertService {
       },
     };
   }
+
   async getAllTriggeredAlerts(
     userId: string,
     query: GetAllTriggeredAlertsQueryDto,
   ) {
-    const triggeredAlerts = await BudgetAlert.find({
-      userId,
-      isRead: query.isRead,
-      month: query.month,
-      triggered: true,
-    })
-      .sort({ triggeredAt: -1 })
-      .populate("categoryId");
+    const page = parseInt(query.page) || 0;
+    const pageSize = parseInt(query.pageSize) || 10;
 
-    return triggeredAlerts;
+    const triggeredAlerts = await BudgetAlert.aggregate([
+      {
+        $match: {
+          userId,
+          isRead: query.isRead,
+          month: query.month,
+          triggered: true,
+        },
+      },
+      {
+        $sort: {
+          triggeredAt: -1,
+        },
+      },
+      {
+        $facet: {
+          metaData: [{ $count: "totalCount" }],
+          data: [{ $skip: (page - 1) * pageSize }],
+        },
+      },
+      {
+        $lookup: {
+          from: "Categories",
+          localField: "categoryId",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: "$category" },
+    ]);
+
+    const totalCount = triggeredAlerts[0]?.metaData[0]?.totalCount || 0;
+
+    return {
+      data: triggeredAlerts[0].data,
+      metaData: {
+        totalCount,
+        page,
+        pageSize,
+        totalPages: Math.ceil(totalCount / pageSize),
+      },
+    };
   }
 
   async markBudgetAlertAsRead(userId: string, bugetAlertId: string) {
@@ -203,8 +241,11 @@ export class BudgetAlertService implements IBudgetAlertService {
     };
   }
 
-  async getHistoryBudgetAlertByMonth(userId: string, month: string) {
-    const date = new Date(month);
+  async getHistoryBudgetAlertByMonth(
+    userId: string,
+    query: GetHistoryBudgetAlertByMonthQuery,
+  ) {
+    const date = new Date(query.month);
     const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     const startOfNextMonth = new Date(
       date.getFullYear(),

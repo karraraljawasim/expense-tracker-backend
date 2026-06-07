@@ -57,7 +57,7 @@ export class BudgetAlertController {
     >;
     const data = await this.#budgetAlertService.getHistoryBudgetAlertByMonth(
       req.user!.id,
-      query.month,
+      query,
     );
 
     ApiResponse.success(res, data);
