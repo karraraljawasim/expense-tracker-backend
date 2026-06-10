@@ -6,6 +6,7 @@ import { validate } from "../../middlewares/validation.middleware.js";
 import {
   categoryIdParamsSchema,
   createCategorySchema,
+  paginateQury,
   updateCategorySchema,
 } from "./category.validation.js";
 
@@ -16,7 +17,11 @@ export const categoryRouter = Router();
 categoryRouter
   .route("/")
   .post(authenticate, validate(createCategorySchema), categoryController.create)
-  .get(authenticate, categoryController.getAll);
+  .get(
+    authenticate,
+    validate(paginateQury, "query"),
+    categoryController.getAll,
+  );
 
 categoryRouter
   .route("/:categoryId")

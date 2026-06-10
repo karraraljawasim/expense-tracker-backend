@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+import { PaginationResponseDto } from "../../types/pagination.js";
 import {
   AppError,
   ConflictError,
@@ -18,7 +20,10 @@ export interface ICategoryService {
     input: CreateCategoryRequestDto & { userId: string },
   ) => Promise<void>;
 
-  getAll: (userId: string) => Promise<Category[]>;
+  getAll: (
+    userId: string,
+    query: { pageSize: string; page: string },
+  ) => Promise<PaginationResponseDto<Category>>;
   getOneById: (categoryId: string, userId: string) => Promise<Category>;
   updateById: (
     input: UpdateCategoryRequestDto,
@@ -52,13 +57,40 @@ export class CategoryService implements ICategoryService {
     }
   }
 
-  async getAll(userId: string) {
-    const categories = await Categories.find({
-      userId: userId,
-      isDeleted: false,
-    });
+  async getAll(userId: string, query: { pageSize: string; page: string }) {
+    const page = parseInt(query.page, 10) || 1;
+    const pageSize = parseInt(query.pageSize, 10) || 10;
 
-    return categories;
+    const categories = await Categories.aggregate([
+      {
+        $match: {
+          userId: new Types.ObjectId(userId),
+          isDeleted: false,
+        },
+      },
+      {
+        $sort: {
+          createAt: 1,
+        },
+      },
+      {
+        $facet: {
+          metaData: [{ $count: "totalCount" }],
+          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    const totalCount = categories[0]?.metaData[0]?.totalCount || 0;
+    return {
+      data: categories[0].data,
+      metaData: {
+        totalCount,
+        page,
+        pageSize,
+        totalPages: Math.round(totalCount / pageSize),
+      },
+    };
   }
 
   async getOneById(categoryId: string, userId: string) {

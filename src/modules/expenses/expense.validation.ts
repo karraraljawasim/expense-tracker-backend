@@ -64,6 +64,8 @@ export const getAllExpensesQuerySchema = z.object({
     .optional(),
   minAmount: z.coerce.number().optional(),
   maxAmount: z.coerce.number().optional(),
+  page: z.string().optional().default("1"),
+  pageSize: z.string().optional().default("10"),
 });
 
 export const expenseIdPramseSchema = z.object({

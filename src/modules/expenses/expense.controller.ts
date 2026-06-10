@@ -26,7 +26,7 @@ export class ExpenseController {
     >;
     const data = await this.#expenseService.getAll(query, req.user!.id);
 
-    ApiResponse.success(res, data);
+    ApiResponse.paginationData(res, data);
   });
 
   getById = asyncHandler(async (req, res) => {

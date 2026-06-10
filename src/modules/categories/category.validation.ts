@@ -34,5 +34,10 @@ export const categoryIdParamsSchema = z.object({
   }),
 });
 
+export const paginateQury = z.object({
+  page: z.string().optional().default("1"),
+  pageSize: z.string().optional().default("10"),
+});
+
 export type CreateCategoryRequestDto = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryRequestDto = z.infer<typeof updateCategorySchema>;

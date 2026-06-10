@@ -32,7 +32,7 @@ export type IGetAllExpensesFilter = {
   amount?: { $gte?: number; $lte?: number };
   currency?: string;
   isRecurring?: boolean;
-  userId: string;
+  userId: Types.ObjectId;
   "recurrence.parentId"?: null;
   isDeleted: false;
 };

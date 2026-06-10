@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import {
   AppError,
   GoneError,
@@ -18,6 +18,7 @@ import {
   GetAllExpensesQueryDto,
   UpdateExpenseRequestDto,
 } from "./expense.validation.js";
+import { PaginationResponseDto } from "../../types/pagination.js";
 
 let exchangeRate = 1;
 export interface IExpenseService {
@@ -25,7 +26,7 @@ export interface IExpenseService {
   getAll: (
     query: GetAllExpensesQueryDto,
     userId: string,
-  ) => Promise<IExpense[]>;
+  ) => Promise<PaginationResponseDto<IExpense>>;
   getById: (
     expenseId: string,
     userId: string,
@@ -123,7 +124,7 @@ export class ExpenseService implements IExpenseService {
     }
 
     const filterObject: IGetAllExpensesFilter = {
-      userId: userId,
+      userId: new Types.ObjectId(userId),
       isDeleted: false,
     };
 
@@ -157,9 +158,37 @@ export class ExpenseService implements IExpenseService {
     filterObject.date.$gte = new Date(query.from);
     filterObject.date.$lt = new Date(query.to);
 
-    const expensess = await Expense.find(filterObject);
+    const page = parseInt(query.page, 10) || 1;
+    const pageSize = parseInt(query.pageSize, 10) || 10;
 
-    return expensess;
+    const expensess = await Expense.aggregate([
+      {
+        $match: { ...filterObject },
+      },
+      {
+        $sort: {
+          date: -1,
+        },
+      },
+      {
+        $facet: {
+          metaData: [{ $count: "totalCount" }],
+          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    const totalCount = expensess[0]?.metaData[0]?.totalCount || 0;
+
+    return {
+      data: expensess[0].data,
+      metaData: {
+        totalCount,
+        page,
+        pageSize,
+        totalPages: Math.ceil(totalCount / pageSize),
+      },
+    };
   }
 
   async getById(expenseId: string, userId: string) {

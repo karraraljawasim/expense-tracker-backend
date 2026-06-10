@@ -18,6 +18,8 @@ export const getAllTriggeredAlertsQueryschema = z.object({
       );
       return startOfCurrentMonth.toISOString().slice(0, 7);
     }),
+  page: z.string().optional().default("1"),
+  pageSize: z.string().optional().default("10"),
 });
 
 export const budgetAlertIdPramseSchema = z.object({
@@ -46,4 +48,8 @@ export const getHistoryBudgetAlertByMonthQuerySchema = z.object({
 
 export type GetAllTriggeredAlertsQueryDto = z.infer<
   typeof getAllTriggeredAlertsQueryschema
+>;
+
+export type GetHistoryBudgetAlertByMonthQuery = z.infer<
+  typeof getHistoryBudgetAlertByMonthQuerySchema
 >;
