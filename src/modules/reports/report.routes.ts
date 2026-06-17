@@ -3,7 +3,10 @@ import { ReportController } from "./report.controller.js";
 import { ReportService } from "./report.service.js";
 import { authenticate } from "../../middlewares/auth.middlewares.js";
 import { validate } from "../../middlewares/validation.middleware.js";
-import { getMonthlyReportQuerySchmea } from "./report.validation.js";
+import {
+  getMonthlyReportQuerySchema,
+  getSummaryBodySchema,
+} from "./report.validation.js";
 import { categoryIdParamsSchema } from "../categories/category.validation.js";
 
 const reportController = new ReportController(new ReportService());
@@ -13,7 +16,7 @@ reportRouter
   .route("/monthly")
   .get(
     authenticate,
-    validate(getMonthlyReportQuerySchmea, "query"),
+    validate(getMonthlyReportQuerySchema, "query"),
     reportController.getMonthlyReport,
   );
 
@@ -23,4 +26,12 @@ reportRouter
     authenticate,
     validate(categoryIdParamsSchema, "params"),
     reportController.getExpenseReportByCategory,
+  );
+
+reportRouter
+  .route("/summary")
+  .get(
+    authenticate,
+    validate(getSummaryBodySchema),
+    reportController.getSummary,
   );

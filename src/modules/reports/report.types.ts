@@ -16,3 +16,17 @@ export type GetExpenseReportByCategoryResponseDto = {
   totalSpendOverall: number;
   top3ExpensiveExpenses: IExpense[];
 };
+
+export type GetSummaryResponseDto = {
+  financials: {
+    totalSpendSoFar: number;
+    remainingBudget: number;
+    projectedTotal: number;
+  };
+  time: {
+    daysRemaining: number;
+    daysPassed: number;
+    totalDaysInMonth: number;
+  };
+  top3Cateogries: any[];
+};

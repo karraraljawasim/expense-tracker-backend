@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const getMonthlyReportQuerySchmea = z.object({
+export const getMonthlyReportQuerySchema = z.object({
   page: z.string().optional().default("1"),
   pageSize: z.string().optional().default("10"),
   month: z.string().regex(/^\d{4}-\d{2}$/, {
@@ -8,4 +8,8 @@ export const getMonthlyReportQuerySchmea = z.object({
   }),
 });
 
-export type GetMonthlyReportQuery = z.infer<typeof getMonthlyReportQuerySchmea>;
+export const getSummaryBodySchema = z.object({
+  thisMonthBudget: z.number(),
+});
+
+export type GetMonthlyReportQuery = z.infer<typeof getMonthlyReportQuerySchema>;

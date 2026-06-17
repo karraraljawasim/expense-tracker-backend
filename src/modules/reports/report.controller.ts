@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { IReportService } from "./report.service.js";
-import { getMonthlyReportQuerySchmea } from "./report.validation.js";
+import { getMonthlyReportQuerySchema } from "./report.validation.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 
 export class ReportController {
@@ -13,7 +13,7 @@ export class ReportController {
 
   getMonthlyReport = asyncHandler(async (req, res) => {
     const query = req.validateQuery as z.infer<
-      typeof getMonthlyReportQuerySchmea
+      typeof getMonthlyReportQuerySchema
     >;
     const data = await this.#ReportService.getMonthlyReport(
       query,
@@ -27,6 +27,15 @@ export class ReportController {
     const data = await this.#ReportService.getExpenseReportByCategory(
       req.params.categoryId as string,
       req.user!.id,
+    );
+
+    ApiResponse.success(res, data);
+  });
+
+  getSummary = asyncHandler(async (req, res) => {
+    const data = await this.#ReportService.getSummary(
+      req.user!.id,
+      req.body.thisMonthBudget,
     );
 
     ApiResponse.success(res, data);
