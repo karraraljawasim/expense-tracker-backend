@@ -35,13 +35,13 @@ export class CategoryController {
   });
 
   updateById = asyncHandler(async (req, res) => {
-    await this.#categoryService.updateById(
+    const data = await this.#categoryService.updateById(
       req.body,
       req.params.categoryId as string,
       req.user!.id,
     );
 
-    ApiResponse.success(res, { message: "Update category successfully" });
+    ApiResponse.success(res, data);
   });
 
   deleteById = asyncHandler(async (req, res) => {

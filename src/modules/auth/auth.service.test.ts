@@ -1,6 +1,6 @@
 import { vi, describe, beforeEach, it, expect } from "vitest";
 import bcrypt from "bcrypt";
-import { getAuthToken } from "../../../tests/helpers/fixtures.js";
+import { getAuthTokens } from "../../../tests/helpers/fixtures.js";
 
 vi.mock("./auth.model", () => ({
   RefreshToken: {
@@ -193,16 +193,16 @@ describe("AuthService.refresh", () => {
       role: "user",
     });
 
-    const authToken = getAuthToken({ _id: userId, role: "user" });
+    const tokens = getAuthTokens({ _id: userId, role: "user" });
 
     RefreshToken.findOne = vi.fn().mockResolvedValue({
       _id: "tokenId",
       userId: userId,
-      token: authToken,
+      token: tokens.refreshToken,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
 
-    const result = await authService.refresh(authToken);
+    const result = await authService.refresh(tokens.refreshToken);
 
     expect(result).toHaveProperty("accessToken");
   });
@@ -217,18 +217,18 @@ describe("AuthService.refresh", () => {
     const atherUserId = new Types.ObjectId();
     const userId = new Types.ObjectId();
 
-    const authToken = getAuthToken({ _id: userId, role: "user" });
+    const tokens = getAuthTokens({ _id: userId, role: "user" });
 
     RefreshToken.findOne = vi.fn().mockResolvedValue({
       _id: "tokenId",
       userId: atherUserId,
-      token: authToken,
+      token: tokens.refreshToken,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
 
     RefreshToken.deleteOne = vi.fn().mockResolvedValue({});
 
-    await expect(authService.refresh(authToken)).rejects.toThrow();
+    await expect(authService.refresh(tokens.refreshToken)).rejects.toThrow();
     expect(RefreshToken.deleteOne).toHaveBeenCalledTimes(1);
   });
 });

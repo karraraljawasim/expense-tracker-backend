@@ -7,7 +7,7 @@ import {
   UnauthorizedError,
   GoneError,
 } from "../../utils/AppError.js";
-import Users from "../users/user.model.js";
+import { Users } from "../users/user.model.js";
 import Categories from "./category.model.js";
 import { Category } from "./category.types.js";
 import {
@@ -29,7 +29,7 @@ export interface ICategoryService {
     input: UpdateCategoryRequestDto,
     categoryId: string,
     userId: string,
-  ) => Promise<void>;
+  ) => Promise<Category>;
 
   deleteById: (categoryId: string, userId: string) => Promise<void>;
 }
@@ -72,7 +72,7 @@ export class CategoryService implements ICategoryService {
       },
       {
         $sort: {
-          createAt: 1,
+          createdAt: 1,
         },
       },
       {
@@ -129,15 +129,15 @@ export class CategoryService implements ICategoryService {
       throw new GoneError("category");
     }
 
-    const updatedCateogry = await Categories.updateOne(
+    await Categories.updateOne(
       { _id: categoryId },
       { ...input },
       { timestamps: true },
     );
 
-    if (!updatedCateogry) {
-      throw new AppError("Update category failed");
-    }
+    const updatedCateogry = await Categories.findById(categoryId);
+
+    return updatedCateogry!;
   }
 
   async deleteById(categoryId: string, userId: string) {
@@ -153,7 +153,9 @@ export class CategoryService implements ICategoryService {
       throw new UnauthorizedError("You not owner to this cateogry");
     }
 
-    const deletedCategory = await Categories.findByIdAndUpdate(categoryId);
+    const deletedCategory = await Categories.findByIdAndUpdate(categoryId, {
+      isDeleted: true,
+    });
     if (!deletedCategory) {
       throw new AppError("Delete category failed");
     }

@@ -18,7 +18,7 @@
     "dev": "tsx watch src/server.ts",
     "bulid": "tsc",
     "start": "node dist/server.js",
-    "test": "vitest --run "
+    "test": "vitest"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
