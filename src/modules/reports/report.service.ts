@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { Expense } from "../expenses/expense.modle.js";
+import { Expense } from "../expenses/expense.model.js";
 import { GetMonthlyReportQuery } from "./report.validation.js";
 import {
   GetExpenseReportByCategoryResponseDto,
@@ -9,6 +9,7 @@ import {
 import { PaginationResponseDto } from "../../types/pagination.js";
 import Categories from "../categories/category.model.js";
 import { NotFoundError } from "../../utils/AppError.js";
+import { getStartAndStartNextMonth } from "../../utils/date.calculate.js";
 
 export interface IReportService {
   getMonthlyReport: (
@@ -31,18 +32,13 @@ export class ReportService implements IReportService {
 
     const date = new Date(query.month);
 
-    const startMonth = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), 1),
-    );
-    const nextMonth = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth() + 1, 1),
-    );
+    const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth(date);
 
     const expenseReport = await Expense.aggregate([
       {
         $match: {
           userId: new Types.ObjectId(userId),
-          date: { $gte: startMonth, $lt: nextMonth },
+          date: { $gte: startOfMonth, $lt: startOfNextMonth },
           isDeleted: false,
         },
       },
@@ -159,15 +155,13 @@ export class ReportService implements IReportService {
   }
 
   async getSummary(userId: string, thisMonthBudget: number) {
-    const now = new Date();
-    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth();
 
     const reportSummary = await Expense.aggregate([
       {
         $match: {
           userId: new Types.ObjectId(userId),
-          date: { $gte: thisMonth, $lt: nextMonth },
+          date: { $gte: startOfMonth, $lt: startOfNextMonth },
           isDeleted: false,
         },
       },
@@ -206,6 +200,7 @@ export class ReportService implements IReportService {
     const top3Cateogries = report?.top3Cateogries || [];
 
     // Calculate Time
+    const now = new Date();
     const daysPassed = now.getDate();
     const totalDaysInMonth = new Date(
       Date.UTC(now.getFullYear(), now.getMonth() + 1, 0),

@@ -2,10 +2,10 @@ import bcrypt from "bcrypt";
 import { Users } from "../../src/modules/users/user.model.js";
 import { jwtUtils } from "../../src/utils/jwt.js";
 import Categories from "../../src/modules/categories/category.model.js";
-import { Expense } from "../../src/modules/expenses/expense.modle.js";
+import { Expense } from "../../src/modules/expenses/expense.model.js";
 import { Types } from "mongoose";
 import { checkBudgetAlert } from "../../src/helpers/expense.helper.js";
-import { BudgetAlert } from "../../src/modules/budgetAlert/budgetAlert.modle.js";
+import { BudgetAlert } from "../../src/modules/budgetAlert/budgetAlert.model.js";
 
 export function getAuthTokens(user: any) {
   return jwtUtils.signPair({ sub: { id: user._id, role: user.role } });

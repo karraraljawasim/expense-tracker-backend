@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
-import { BudgetAlert } from "./budgetAlert.modle.js";
+import { BudgetAlert } from "./budgetAlert.model.js";
 import Categories from "../categories/category.model.js";
-import { Expense } from "../expenses/expense.modle.js";
+import { Expense } from "../expenses/expense.model.js";
 import { IBudgetAlert, MonthlyBudgetResponse } from "./budgetAlert.types.js";
 import {
   GetAllTriggeredAlertsQueryDto,
@@ -9,6 +9,7 @@ import {
 } from "./budgetAlert.validation.js";
 import { AppError, NotFoundError } from "../../utils/AppError.js";
 import { PaginationResponseDto } from "../../types/pagination.js";
+import { getStartAndStartNextMonth } from "../../utils/date.calculate.js";
 
 export interface IBudgetAlertService {
   getMonthlyBudgetStatus: (userId: string) => Promise<MonthlyBudgetResponse>;
@@ -30,9 +31,7 @@ export interface IBudgetAlertService {
 }
 export class BudgetAlertService implements IBudgetAlertService {
   async getMonthlyBudgetStatus(userId: string) {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth();
 
     const userCategories = await Categories.find({ userId, isDeleted: false });
 
@@ -250,12 +249,8 @@ export class BudgetAlertService implements IBudgetAlertService {
     query: GetHistoryBudgetAlertByMonthQuery,
   ) {
     const date = new Date(query.month);
-    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const startOfNextMonth = new Date(
-      date.getFullYear(),
-      date.getMonth() + 1,
-      1,
-    );
+    const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth(date);
+
     const userCategories = await Categories.find({ userId, isDeleted: false });
 
     const result = await Expense.aggregate([

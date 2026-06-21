@@ -1,4 +1,4 @@
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 import {
   AppError,
   GoneError,
@@ -8,9 +8,10 @@ import {
 import {
   checkBudgetAlert,
   computeAmountInBaseCurrency,
+  createfilterObject,
 } from "../../helpers/expense.helper.js";
 import Categories from "../categories/category.model.js";
-import { Expense } from "./expense.modle.js";
+import { Expense } from "./expense.model.js";
 import {
   GetExpenseByIdResponseDto,
   IExpense,
@@ -22,6 +23,7 @@ import {
   UpdateExpenseRequestDto,
 } from "./expense.validation.js";
 import { PaginationResponseDto } from "../../types/pagination.js";
+import { calculateStartDateInMidnight } from "../../utils/date.calculate.js";
 
 let exchangeRate = 1;
 export interface IExpenseService {
@@ -68,12 +70,11 @@ export class ExpenseService implements IExpenseService {
         throw new AppError("Recurrence object requierd", 400);
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const startDate = new Date(input.recurrence.startDate);
-      startDate.setHours(0, 0, 0, 0);
+      const startDate = calculateStartDateInMidnight(
+        input.recurrence.startDate,
+      );
 
-      if (startDate < today) {
+      if (startDate < new Date()) {
         throw new AppError("Start date must not be in the past", 400);
       }
 
@@ -126,40 +127,10 @@ export class ExpenseService implements IExpenseService {
       }
     }
 
-    const filterObject: IGetAllExpensesFilter = {
-      userId: new Types.ObjectId(userId),
-      isDeleted: false,
-    };
-
-    if (query.categoryId) {
-      filterObject.categoryId = query.categoryId;
-    }
-
-    if (query.currency) {
-      filterObject.currency = query.currency;
-    }
-
-    if (query.maxAmount !== undefined || query.minAmount !== undefined) {
-      filterObject.amount = {};
-
-      if (query.minAmount !== undefined) {
-        filterObject.amount.$gte = query.minAmount;
-      }
-      if (query.maxAmount !== undefined) {
-        filterObject.amount.$lte = query.maxAmount;
-      }
-    }
-    if (query.isRecurring !== undefined) {
-      filterObject.isRecurring = query.isRecurring;
-
-      if (query.isRecurring === true) {
-        filterObject["recurrence.parentId"] = null;
-      }
-    }
-
-    filterObject.date = {};
-    filterObject.date.$gte = new Date(query.from);
-    filterObject.date.$lt = new Date(query.to);
+    const filterObject: IGetAllExpensesFilter = createfilterObject(
+      query,
+      userId,
+    );
 
     const page = parseInt(query.page, 10) || 1;
     const pageSize = parseInt(query.pageSize, 10) || 10;

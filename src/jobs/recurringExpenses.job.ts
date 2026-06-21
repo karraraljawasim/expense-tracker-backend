@@ -1,5 +1,6 @@
 import { checkBudgetAlert } from "../helpers/expense.helper.js";
-import { Expense } from "../modules/expenses/expense.modle.js";
+import { Expense } from "../modules/expenses/expense.model.js";
+import { calculateNextRunAt } from "../utils/date.calculate.js";
 
 export async function generateRecurringExpenses() {
   console.log(`[CRON] Starting recurring expenses generation ...`);
@@ -15,22 +16,11 @@ export async function generateRecurringExpenses() {
     try {
       const { recurrence } = parent;
 
-      // calculate next run date
-      let nextDate = new Date(recurrence!.nextRunAt);
-      switch (recurrence!.frequency) {
-        case "daily":
-          nextDate.setDate(nextDate.getDate() + recurrence!.interval);
-          break;
-        case "weekly":
-          nextDate.setDate(nextDate.getDate() + recurrence!.interval * 7);
-          break;
-        case "monthly":
-          nextDate.setDate(nextDate.getMonth() + recurrence!.interval);
-          break;
-        case "yearly":
-          nextDate.setDate(nextDate.getFullYear() + recurrence!.interval);
-          break;
-      }
+      const nextDate = calculateNextRunAt(
+        recurrence!.nextRunAt,
+        recurrence!.frequency,
+        recurrence!.interval,
+      );
 
       // check if recurrence ended
       if (recurrence!.endDate && recurrence!.nextRunAt > recurrence!.endDate) {

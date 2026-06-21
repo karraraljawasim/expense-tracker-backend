@@ -1,8 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
+
 import Categories from "../modules/categories/category.model.js";
-import { BudgetAlert } from "../modules/budgetAlert/budgetAlert.modle.js";
-import { NotFoundError } from "../utils/AppError.js";
-import { Expense } from "../modules/expenses/expense.modle.js";
+import { BudgetAlert } from "../modules/budgetAlert/budgetAlert.model.js";
+import { AppError, NotFoundError } from "../utils/AppError.js";
+import { Expense } from "../modules/expenses/expense.model.js";
+import { GetAllExpensesQueryDto } from "../modules/expenses/expense.validation.js";
+import { IGetAllExpensesFilter } from "../modules/expenses/expense.types.js";
 
 export async function checkBudgetAlert(
   userId: string,
@@ -101,4 +104,50 @@ export function computeAmountInBaseCurrency(
   amount: number,
 ) {
   return amount * exchangeRate;
+}
+
+export function createfilterObject(
+  query: GetAllExpensesQueryDto,
+  userId: string,
+) {
+  const filterObject: IGetAllExpensesFilter = {
+    userId: new Types.ObjectId(userId),
+    isDeleted: false,
+  };
+
+  if (query.categoryId) {
+    filterObject.categoryId = query.categoryId;
+  }
+
+  if (query.currency) {
+    filterObject.currency = query.currency;
+  }
+
+  if (query.maxAmount !== undefined || query.minAmount !== undefined) {
+    filterObject.amount = {};
+
+    if (query.minAmount !== undefined) {
+      filterObject.amount.$gte = query.minAmount;
+    }
+    if (query.maxAmount !== undefined) {
+      filterObject.amount.$lte = query.maxAmount;
+    }
+  }
+  if (query.isRecurring !== undefined) {
+    filterObject.isRecurring = query.isRecurring;
+
+    if (query.isRecurring === true) {
+      filterObject["recurrence.parentId"] = null;
+    }
+  }
+
+  if (query.from > query.to) {
+    throw new AppError("(to) date must be greater than (from) date", 400);
+  }
+
+  filterObject.date = {};
+  filterObject.date.$gte = new Date(query.from);
+  filterObject.date.$lt = new Date(query.to);
+
+  return filterObject;
 }

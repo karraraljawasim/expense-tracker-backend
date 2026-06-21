@@ -4,7 +4,6 @@ import request from "supertest";
 import { app } from "../helpers/testApp.ts";
 import {
   createAuthenticedUser,
-  createTestBudgetAlert,
   createTestCategory,
   createTestExpense,
 } from "../helpers/fixtures.ts";
