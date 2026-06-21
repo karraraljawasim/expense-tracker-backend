@@ -13,9 +13,9 @@ export class CategoryController {
 
   create = asyncHandler(async (req, res) => {
     const userId = req.user!.id;
-    await this.#categoryService.create({ ...req.body, userId });
+    const data = await this.#categoryService.create({ ...req.body, userId });
 
-    ApiResponse.create(res, { message: "Create new category successfully" });
+    ApiResponse.create(res, data);
   });
 
   getAll = asyncHandler(async (req, res) => {
@@ -35,13 +35,13 @@ export class CategoryController {
   });
 
   updateById = asyncHandler(async (req, res) => {
-    await this.#categoryService.updateById(
+    const data = await this.#categoryService.updateById(
       req.body,
       req.params.categoryId as string,
       req.user!.id,
     );
 
-    ApiResponse.success(res, { message: "Update category successfully" });
+    ApiResponse.success(res, data);
   });
 
   deleteById = asyncHandler(async (req, res) => {

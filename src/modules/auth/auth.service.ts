@@ -1,10 +1,10 @@
 import bcrypt from "bcrypt";
-import RefreshToken from "./auth.model.js";
+import { RefreshToken } from "./auth.model.js";
 import {
   LoginUserRequestDto,
   RegisterUserRequestDto,
 } from "./auth.validation.js";
-import Users from "../users/user.model.js";
+import { Users } from "../users/user.model.js";
 import { ConflictError, UnauthorizedError } from "../../utils/AppError.js";
 import { jwtUtils } from "../../utils/jwt.js";
 import { TokenPair } from "./auth.types.js";

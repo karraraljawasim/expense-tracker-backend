@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
-import { BudgetAlert } from "./budgetAlert.modle.js";
+import { BudgetAlert } from "./budgetAlert.model.js";
 import Categories from "../categories/category.model.js";
-import { Expense } from "../expenses/expense.modle.js";
+import { Expense } from "../expenses/expense.model.js";
 import { IBudgetAlert, MonthlyBudgetResponse } from "./budgetAlert.types.js";
 import {
   GetAllTriggeredAlertsQueryDto,
@@ -9,6 +9,7 @@ import {
 } from "./budgetAlert.validation.js";
 import { AppError, NotFoundError } from "../../utils/AppError.js";
 import { PaginationResponseDto } from "../../types/pagination.js";
+import { getStartAndStartNextMonth } from "../../utils/date.calculate.js";
 
 export interface IBudgetAlertService {
   getMonthlyBudgetStatus: (userId: string) => Promise<MonthlyBudgetResponse>;
@@ -30,9 +31,7 @@ export interface IBudgetAlertService {
 }
 export class BudgetAlertService implements IBudgetAlertService {
   async getMonthlyBudgetStatus(userId: string) {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth();
 
     const userCategories = await Categories.find({ userId, isDeleted: false });
 
@@ -154,44 +153,49 @@ export class BudgetAlertService implements IBudgetAlertService {
     userId: string,
     query: GetAllTriggeredAlertsQueryDto,
   ) {
-    const page = parseInt(query.page) || 0;
+    const page = parseInt(query.page) || 1;
     const pageSize = parseInt(query.pageSize) || 10;
 
+    const matchStage: Record<string, unknown> = {
+      userId: new Types.ObjectId(userId),
+      triggered: true,
+    };
+
+    if (query.isRead !== undefined) matchStage.isRead = query.isRead;
+    if (query.month) matchStage.month = query.month;
+
     const triggeredAlerts = await BudgetAlert.aggregate([
-      {
-        $match: {
-          userId,
-          isRead: query.isRead,
-          month: query.month,
-          triggered: true,
-        },
-      },
-      {
-        $sort: {
-          triggeredAt: -1,
-        },
-      },
+      { $match: matchStage },
+      { $sort: { triggeredAt: -1 } },
       {
         $facet: {
           metaData: [{ $count: "totalCount" }],
-          data: [{ $skip: (page - 1) * pageSize }],
+          data: [
+            { $skip: (page - 1) * pageSize },
+            { $limit: pageSize },
+            {
+              $lookup: {
+                from: "categories",
+                localField: "categoryId",
+                foreignField: "_id",
+                as: "category",
+              },
+            },
+            {
+              $unwind: {
+                path: "$category",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+          ],
         },
       },
-      {
-        $lookup: {
-          from: "Categories",
-          localField: "categoryId",
-          foreignField: "_id",
-          as: "category",
-        },
-      },
-      { $unwind: "$category" },
     ]);
 
     const totalCount = triggeredAlerts[0]?.metaData[0]?.totalCount || 0;
 
     return {
-      data: triggeredAlerts[0].data,
+      data: triggeredAlerts[0]?.data || [],
       metaData: {
         totalCount,
         page,
@@ -211,12 +215,11 @@ export class BudgetAlertService implements IBudgetAlertService {
       return bugetAlert;
     }
 
-    const updatedBugetAlert = await BudgetAlert.findByIdAndUpdate(
-      bugetAlertId,
-      {
-        isRead: true,
-      },
-    );
+    await BudgetAlert.findByIdAndUpdate(bugetAlertId, {
+      isRead: true,
+    });
+
+    const updatedBugetAlert = await BudgetAlert.findById(bugetAlertId);
 
     if (!updatedBugetAlert) {
       throw new AppError("Mark budget read falied");
@@ -246,12 +249,8 @@ export class BudgetAlertService implements IBudgetAlertService {
     query: GetHistoryBudgetAlertByMonthQuery,
   ) {
     const date = new Date(query.month);
-    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const startOfNextMonth = new Date(
-      date.getFullYear(),
-      date.getMonth() + 1,
-      1,
-    );
+    const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth(date);
+
     const userCategories = await Categories.find({ userId, isDeleted: false });
 
     const result = await Expense.aggregate([

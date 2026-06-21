@@ -6,7 +6,12 @@ export const createCategorySchema = z.object({
     .string()
     .min(2, "Too short category name")
     .max(255, "Too long category name"),
-  color: z.string().optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, {
+      message: "Invalid color format. Expected a 6-character hex code",
+    })
+    .optional(),
   budgetLimit: z
     .number()
     .min(0, "Budget limit must be a positive number")

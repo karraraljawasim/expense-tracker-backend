@@ -1,13 +1,17 @@
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 import {
   AppError,
   GoneError,
   NotFoundError,
   UnauthorizedError,
 } from "../../utils/AppError.js";
-import { checkBudgetAlert } from "../../helpers/expense.helper.js";
+import {
+  checkBudgetAlert,
+  computeAmountInBaseCurrency,
+  createfilterObject,
+} from "../../helpers/expense.helper.js";
 import Categories from "../categories/category.model.js";
-import { Expense } from "./expense.modle.js";
+import { Expense } from "./expense.model.js";
 import {
   GetExpenseByIdResponseDto,
   IExpense,
@@ -19,6 +23,7 @@ import {
   UpdateExpenseRequestDto,
 } from "./expense.validation.js";
 import { PaginationResponseDto } from "../../types/pagination.js";
+import { calculateStartDateInMidnight } from "../../utils/date.calculate.js";
 
 let exchangeRate = 1;
 export interface IExpenseService {
@@ -53,7 +58,7 @@ export class ExpenseService implements IExpenseService {
       throw new UnauthorizedError("You not the owner to this category");
     }
 
-    const amountInBaseCurrency = this.#computeAmountInBaseCurrency(
+    const amountInBaseCurrency = computeAmountInBaseCurrency(
       exchangeRate,
       input.amount,
     );
@@ -65,12 +70,11 @@ export class ExpenseService implements IExpenseService {
         throw new AppError("Recurrence object requierd", 400);
       }
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const startDate = new Date(input.recurrence.startDate);
-      startDate.setHours(0, 0, 0, 0);
+      const startDate = calculateStartDateInMidnight(
+        input.recurrence.startDate,
+      );
 
-      if (startDate < today) {
+      if (startDate < new Date()) {
         throw new AppError("Start date must not be in the past", 400);
       }
 
@@ -123,40 +127,10 @@ export class ExpenseService implements IExpenseService {
       }
     }
 
-    const filterObject: IGetAllExpensesFilter = {
-      userId: new Types.ObjectId(userId),
-      isDeleted: false,
-    };
-
-    if (query.categoryId) {
-      filterObject.categoryId = query.categoryId;
-    }
-
-    if (query.currency) {
-      filterObject.currency = query.currency;
-    }
-
-    if (query.maxAmount !== undefined || query.minAmount !== undefined) {
-      filterObject.amount = {};
-
-      if (query.minAmount !== undefined) {
-        filterObject.amount.$gte = query.minAmount;
-      }
-      if (query.maxAmount !== undefined) {
-        filterObject.amount.$lte = query.maxAmount;
-      }
-    }
-    if (query.isRecurring !== undefined) {
-      filterObject.isRecurring = query.isRecurring;
-
-      if (query.isRecurring === true) {
-        filterObject["recurrence.parentId"] = null;
-      }
-    }
-
-    filterObject.date = {};
-    filterObject.date.$gte = new Date(query.from);
-    filterObject.date.$lt = new Date(query.to);
+    const filterObject: IGetAllExpensesFilter = createfilterObject(
+      query,
+      userId,
+    );
 
     const page = parseInt(query.page, 10) || 1;
     const pageSize = parseInt(query.pageSize, 10) || 10;
@@ -245,7 +219,7 @@ export class ExpenseService implements IExpenseService {
     userId: string,
   ) {
     const expense = await Expense.findById(expenseId);
-    let updatedExpense;
+
     if (!expense || expense?.userId.toString() !== userId) {
       throw new NotFoundError("Expense");
     }
@@ -268,19 +242,20 @@ export class ExpenseService implements IExpenseService {
         (input.amount !== expense.amount && input.amount) ||
         (expense.currency !== input.currency && input.currency)
       ) {
-        amountInBaseCurrency = this.#computeAmountInBaseCurrency(
+        amountInBaseCurrency = computeAmountInBaseCurrency(
           input.amount ? input.amount : expense.amount,
           exchangeRate,
         );
       }
 
-      updatedExpense = await Expense.findByIdAndUpdate(expenseId, {
+      await Expense.findByIdAndUpdate(expenseId, {
         ...input,
         amountInBaseCurrency: amountInBaseCurrency,
       });
 
       await checkBudgetAlert(userId, expense.categoryId.toString());
 
+      const updatedExpense = await Expense.findById(expenseId);
       if (!updatedExpense) {
         throw new AppError("Update expense failed");
       }
@@ -298,19 +273,20 @@ export class ExpenseService implements IExpenseService {
         (input.amount !== expense.amount && input.amount) ||
         (input.currency !== expense.currency && input.currency)
       ) {
-        amountInBaseCurrency = this.#computeAmountInBaseCurrency(
+        amountInBaseCurrency = computeAmountInBaseCurrency(
           input.amount ? input.amount : expense.amount,
           exchangeRate,
         );
       }
 
-      updatedExpense = await Expense.findByIdAndUpdate(expenseId, {
+      await Expense.findByIdAndUpdate(expenseId, {
         ...input,
         amountInBaseCurrency: amountInBaseCurrency,
       });
 
       await checkBudgetAlert(userId, expense.categoryId.toString());
 
+      const updatedExpense = await Expense.findById(expenseId);
       if (!updatedExpense) {
         throw new AppError("Update expense failed");
       }
@@ -325,17 +301,18 @@ export class ExpenseService implements IExpenseService {
           (input.amount !== expense.amount && input.amount) ||
           (input.currency !== expense.currency && input.currency)
         ) {
-          amountInBaseCurrency = this.#computeAmountInBaseCurrency(
+          amountInBaseCurrency = computeAmountInBaseCurrency(
             input.amount ? input.amount : expense.amount,
             exchangeRate,
           );
         }
 
-        updatedExpense = await Expense.findByIdAndUpdate(expenseId, {
+        await Expense.findByIdAndUpdate(expenseId, {
           ...input,
           amountInBaseCurrency: amountInBaseCurrency,
         });
 
+        const updatedExpense = await Expense.findById(expenseId);
         if (!updatedExpense) {
           throw new AppError("Update expense failed");
         }
@@ -348,13 +325,13 @@ export class ExpenseService implements IExpenseService {
           (input.amount !== expense.amount && input.amount) ||
           (input.currency !== expense.currency && input.currency)
         ) {
-          amountInBaseCurrency = this.#computeAmountInBaseCurrency(
+          amountInBaseCurrency = computeAmountInBaseCurrency(
             input.amount ? input.amount : expense.amount,
             exchangeRate,
           );
         }
 
-        updatedExpense = await Expense.findByIdAndUpdate(expenseId, {
+        await Expense.findByIdAndUpdate(expenseId, {
           ...input,
           amountInBaseCurrency,
           "recurrence.nextRunAt": new Date(),
@@ -376,13 +353,13 @@ export class ExpenseService implements IExpenseService {
           (input.amount !== expense.amount && input.amount) ||
           (input.currency !== expense.currency && input.currency)
         ) {
-          amountInBaseCurrency = this.#computeAmountInBaseCurrency(
+          amountInBaseCurrency = computeAmountInBaseCurrency(
             input.amount ? input.amount : expense.amount,
             exchangeRate,
           );
         }
 
-        updatedExpense = await Expense.findByIdAndUpdate(expenseId, {
+        await Expense.findByIdAndUpdate(expenseId, {
           ...input,
           amountInBaseCurrency: amountInBaseCurrency,
         });
@@ -411,6 +388,7 @@ export class ExpenseService implements IExpenseService {
           );
         }
 
+        const updatedExpense = await Expense.findById(expenseId);
         if (!updatedExpense) {
           throw new AppError("Update expense failed");
         }
@@ -432,6 +410,9 @@ export class ExpenseService implements IExpenseService {
       throw new NotFoundError("Expense");
     }
 
+    if (expense.userId.toString() !== userId) {
+      throw new UnauthorizedError("You not owner to this expense");
+    }
     if (expense.isDeleted) {
       throw new GoneError("Expense");
     }
@@ -530,9 +511,5 @@ export class ExpenseService implements IExpenseService {
         return;
       }
     }
-  }
-
-  #computeAmountInBaseCurrency(exchangeRate: number, amount: number) {
-    return amount * exchangeRate;
   }
 }

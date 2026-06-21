@@ -1,5 +1,5 @@
 export type PaginationResponseDto<T> = {
-  data: T[];
+  data?: T[];
   metaData: {
     totalCount: number;
     page: number;

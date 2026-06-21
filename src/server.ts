@@ -6,8 +6,9 @@ import { startCronJobs } from "./config/cron.js";
 export async function bootstrap() {
   try {
     // Connect to database
-    await connectDB();
-
+    if (env.NODE_ENV !== "test") {
+      await connectDB();
+    }
     startCronJobs();
 
     app.listen(env.PORT, () => {

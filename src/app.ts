@@ -6,6 +6,7 @@ import { categoryRouter } from "./modules/categories/category.routes.js";
 import { expenseRouter } from "./modules/expenses/expense.route.js";
 import { budgetAlertRouter } from "./modules/budgetAlert/budgetAlert.routes.js";
 import { userRouter } from "./modules/users/user.routes.js";
+import { reportRouter } from "./modules/reports/report.routes.js";
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use("/api/categories", categoryRouter);
 app.use("/api/expenses", expenseRouter);
 app.use("/api/budgets", budgetAlertRouter);
 app.use("/api/admin/users", userRouter);
+app.use("/api/reports", reportRouter);
 
 app.use(globalErrorHandler);
 
