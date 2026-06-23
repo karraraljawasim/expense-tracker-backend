@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 
-import Categories from "../modules/categories/category.model.js";
+import { Categories } from "../modules/categories/category.model.js";
 import { BudgetAlert } from "../modules/budgetAlert/budgetAlert.model.js";
 import { AppError, NotFoundError } from "../utils/AppError.js";
 import { Expense } from "../modules/expenses/expense.model.js";

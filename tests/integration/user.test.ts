@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import request from "supertest";
 import { app } from "../helpers/testApp";
 import {
-  createAuthenticedUser,
+  createAuthenticatedUser,
   createTestCategory,
   createTestUser,
 } from "../helpers/fixtures.ts";
@@ -12,7 +12,7 @@ let userId: Types.ObjectId;
 let token: string;
 
 beforeEach(async () => {
-  const auth = await createAuthenticedUser({ role: "admin" });
+  const auth = await createAuthenticatedUser({ role: "admin" });
   token = auth.tokens?.accessToken;
   userId = auth.user?._id;
 });
@@ -70,7 +70,7 @@ describe("Get user by id", async () => {
     expect(res.status).toBe(401);
   });
 
-  it("throw error if uesr not found", async () => {
+  it("throw error if user not found", async () => {
     const notExistId = new Types.ObjectId();
     const res = await request(app)
       .get(`/api/admin/users/${notExistId}`)
@@ -88,7 +88,7 @@ describe("Get user by id", async () => {
 
     expect(res.status).toBe(200);
 
-    const notAdmin = await createAuthenticedUser({
+    const notAdmin = await createAuthenticatedUser({
       role: "user",
       email: "user@example.com",
     });
@@ -116,7 +116,7 @@ describe("soft delete user by id", async () => {
     expect(res.status).toBe(200);
   });
 
-  it("throw error if uesr not found", async () => {
+  it("throw error if user not found", async () => {
     const notExistId = new Types.ObjectId();
     const res = await request(app)
       .patch(`/api/admin/users/${notExistId}/soft-delete`)
@@ -142,7 +142,7 @@ describe("update user by id", async () => {
     expect(res.status).toBe(200);
   });
 
-  it("throw error if uesr not found", async () => {
+  it("throw error if user not found", async () => {
     const notExistId = new Types.ObjectId();
     const res = await request(app)
       .patch(`/api/admin/users/${notExistId}`)

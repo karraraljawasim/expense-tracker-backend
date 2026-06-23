@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ICategoryService } from "./category.service.js";
-import { paginateQury } from "./category.validation.js";
+import { paginateQuery } from "./category.validation.js";
 
 export class CategoryController {
   readonly #categoryService: ICategoryService;
@@ -19,7 +19,7 @@ export class CategoryController {
   });
 
   getAll = asyncHandler(async (req, res) => {
-    const query = req.validateQuery as z.infer<typeof paginateQury>;
+    const query = req.validateQuery as z.infer<typeof paginateQuery>;
     const data = await this.#categoryService.getAll(req.user!.id, query);
 
     ApiResponse.paginationData(res, data);

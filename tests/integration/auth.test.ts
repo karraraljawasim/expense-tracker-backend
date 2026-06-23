@@ -3,8 +3,42 @@ import request from "supertest";
 import { app } from "../helpers/testApp.js";
 import { jwtUtils } from "../../src/utils/jwt.js";
 
-describe("Test registeration functionality", () => {
-  const registerEndpoin = "/api/auth/register";
+describe("Test refresh functionality", () => {
+  const refreshEndpoint = "/api/auth/refresh";
+
+  it("Should return access token", async () => {
+    const resRegister = await request(app)
+      .post("/api/auth/register")
+      .send({
+        name: "test",
+        email: "test@exmpile.com",
+        password: "password123",
+        role: "admin",
+      })
+      .expect(201);
+
+    const cookies = Array.isArray(resRegister.header["set-cookie"])
+      ? resRegister.header["set-cookie"]
+      : [];
+    const refreshTokenCookies = cookies.find((cookie: string) =>
+      cookie.startsWith("refreshToken="),
+    );
+    expect(refreshTokenCookies).toBeDefined();
+    const refreshToken = refreshTokenCookies
+      ?.split(";")[0]
+      .split("=")[1] as string;
+    expect(refreshToken).toBeDefined();
+
+    const res = await request(app)
+      .post(refreshEndpoint)
+      .send({ refreshToken: refreshToken });
+    expect(res.status).toBe(200);
+    expect(res.body?.data?.accessToken).toBeDefined();
+  });
+});
+
+describe("Test registration functionality", () => {
+  const registerEndpoint = "/api/auth/register";
   const registerPayload = {
     name: "test",
     email: "test@exmpile.com",
@@ -12,8 +46,8 @@ describe("Test registeration functionality", () => {
     role: "admin",
   };
 
-  it("Should return refersh and access tokens", async () => {
-    const res = await request(app).post(registerEndpoin).send(registerPayload);
+  it("Should return refresh and access tokens", async () => {
+    const res = await request(app).post(registerEndpoint).send(registerPayload);
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
@@ -22,14 +56,14 @@ describe("Test registeration functionality", () => {
   });
 
   it("Disallows duplicated email", async () => {
-    await request(app).post(registerEndpoin).send(registerPayload).expect(201);
+    await request(app).post(registerEndpoint).send(registerPayload).expect(201);
 
-    await request(app).post(registerEndpoin).send(registerPayload).expect(409);
+    await request(app).post(registerEndpoint).send(registerPayload).expect(409);
   });
 
-  it("Should set refersh token in cookies on successful registeration", async () => {
+  it("Should set refresh token in cookies on successful registration", async () => {
     const res = await request(app)
-      .post(registerEndpoin)
+      .post(registerEndpoint)
       .send(registerPayload)
       .expect(201);
 
@@ -44,7 +78,7 @@ describe("Test registeration functionality", () => {
 
   it("Should generate tokens with correct payload", async () => {
     const res = await request(app)
-      .post(registerEndpoin)
+      .post(registerEndpoint)
       .send(registerPayload)
       .expect(201);
 
@@ -82,7 +116,7 @@ describe("Test login functionality", () => {
     password: "password123",
   };
 
-  it("Sholud return (refresh, access) token on sucessful login", async () => {
+  it("Should return (refresh, access) token on successful login", async () => {
     await request(app)
       .post("/api/auth/register")
       .send({
@@ -100,7 +134,7 @@ describe("Test login functionality", () => {
     expect(res.body.data.accessToken).toBeDefined();
   });
 
-  it("Sholud set refresh token in cookies on successful login", async () => {
+  it("Should set refresh token in cookies on successful login", async () => {
     await request(app)
       .post("/api/auth/register")
       .send({
@@ -122,12 +156,12 @@ describe("Test login functionality", () => {
     const refreshTokenCookies = cookies.find((cookie: string) =>
       cookie.startsWith("refreshToken="),
     );
-    const refershToken = refreshTokenCookies?.split(";")[0]?.split("=")[1];
+    const refreshToken = refreshTokenCookies?.split(";")[0]?.split("=")[1];
 
-    expect(refershToken).toBeDefined();
+    expect(refreshToken).toBeDefined();
   });
 
-  it("Sholud generate tokens with corect payload on successful login", async () => {
+  it("Should generate tokens with correct payload on successful login", async () => {
     await request(app)
       .post("/api/auth/register")
       .send({
@@ -151,13 +185,13 @@ describe("Test login functionality", () => {
     );
 
     expect(refreshTokenCookies).toBeDefined();
-    const refershToken = refreshTokenCookies?.split(";")[0].split("=")[1];
-    expect(refershToken).toBeDefined();
+    const refreshToken = refreshTokenCookies?.split(";")[0].split("=")[1];
+    expect(refreshToken).toBeDefined();
 
     const accessToken = res.body.data.accessToken;
     expect(accessToken).toBeDefined();
 
-    const verifyRefreshToken = jwtUtils.verifyRefreshToken(refershToken);
+    const verifyRefreshToken = jwtUtils.verifyRefreshToken(refreshToken);
     const verifyAccessToken = jwtUtils.verifyAccessToken(accessToken);
 
     expect(verifyAccessToken.sub).toBeDefined();
@@ -167,39 +201,5 @@ describe("Test login functionality", () => {
     expect(verifyRefreshToken.sub).toBeDefined();
     expect(verifyRefreshToken.type).toBe("refresh");
     expect(verifyRefreshToken.sub.role).toBe("admin");
-  });
-});
-
-describe("Test refresh functionality", () => {
-  const refreshEndpoint = "/api/auth/refresh";
-
-  it("Should return access token", async () => {
-    const resRegister = await request(app)
-      .post("/api/auth/register")
-      .send({
-        name: "test",
-        email: "test@exmpile.com",
-        password: "password123",
-        role: "admin",
-      })
-      .expect(201);
-
-    const cookies = Array.isArray(resRegister.header["set-cookie"])
-      ? resRegister.header["set-cookie"]
-      : [];
-    const refreshTokenCookies = cookies.find((cookie: string) =>
-      cookie.startsWith("refreshToken="),
-    );
-    expect(refreshTokenCookies).toBeDefined();
-    const refreshToken = refreshTokenCookies
-      ?.split(";")[0]
-      .split("=")[1] as string;
-    expect(refreshToken).toBeDefined();
-
-    const res = await request(app)
-      .post(refreshEndpoint)
-      .send({ refreshToken: refreshToken });
-    expect(res.status).toBe(200);
-    expect(res.body?.data?.accessToken).toBeDefined();
   });
 });

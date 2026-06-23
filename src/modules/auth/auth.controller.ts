@@ -45,15 +45,18 @@ export class AuthController {
     if (!refreshToken) {
       throw new UnauthorizedError("No refresh token");
     }
+    const accessToken = req.headers.authorization!.split(" ")[1];
 
-    await this.authService.logout(refreshToken);
+    await this.authService.logout(refreshToken, accessToken!);
     clearRefreshCookie(res);
 
     ApiResponse.noContent(res);
   });
 
   logoutAll = asyncHandler(async (req, res) => {
-    await this.authService.logoutAll(req.user!.id);
+    const accessToken = req.headers.authorization!.split(" ")[1];
+
+    await this.authService.logoutAll(req.user!.id, accessToken!);
     clearRefreshCookie(res);
 
     ApiResponse.noContent(res);
@@ -62,7 +65,7 @@ export class AuthController {
   refresh = asyncHandler(async (req, res) => {
     const refreshToken = getRefreshCookie(req);
     if (!refreshToken) {
-      throw new UnauthorizedError("No refersh token");
+      throw new UnauthorizedError("No refresh token");
     }
 
     const data = await this.authService.refresh(refreshToken);

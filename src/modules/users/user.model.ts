@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 import { IUser } from "./user.types.js";
 
-const userShema = new Schema<IUser>(
+const userSchema = new Schema<IUser>(
   {
     name: {
       type: String,
@@ -39,4 +39,4 @@ const userShema = new Schema<IUser>(
   { timestamps: true },
 );
 
-export const Users = model<IUser>("Users", userShema);
+export const Users = model<IUser>("Users", userSchema);

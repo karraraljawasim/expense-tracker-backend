@@ -7,7 +7,7 @@ import {
   GetSummaryResponseDto,
 } from "./report.types.js";
 import { PaginationResponseDto } from "../../types/pagination.js";
-import Categories from "../categories/category.model.js";
+import { Categories } from "../categories/category.model.js";
 import { NotFoundError } from "../../utils/AppError.js";
 import { getStartAndStartNextMonth } from "../../utils/date.calculate.js";
 
@@ -46,7 +46,7 @@ export class ReportService implements IReportService {
         $group: {
           _id: "$categoryId",
           totalSpendByCategory: { $sum: "$amountInBaseCurrency" },
-          avargSpendByCategory: { $avg: "$amountInBaseCurrency" },
+          averageSpendByCategory: { $avg: "$amountInBaseCurrency" },
           expenseCountInCategory: { $sum: 1 },
         },
       },
@@ -82,7 +82,7 @@ export class ReportService implements IReportService {
         ? expenseReport[0].data.map((row: any) => ({
             categoryId: row?._id,
             totalSpend: row?.totalSpendByCategory,
-            avargSpend: row?.avargSpendByCategory,
+            averageSpend: row?.averageSpendByCategory,
             expenseCount: row?.expenseCountInCategory,
           }))
         : [],
@@ -175,7 +175,7 @@ export class ReportService implements IReportService {
               },
             },
           ],
-          top3Cateogries: [
+          top3Categories: [
             {
               $group: {
                 _id: "$categoryId",
@@ -197,7 +197,7 @@ export class ReportService implements IReportService {
 
     const report = reportSummary[0];
     const totalSpendSoFar = report?.totalSpendData[0]?.totalSpendSoFar || 0;
-    const top3Cateogries = report?.top3Cateogries || [];
+    const top3Categories = report?.top3Categories || [];
 
     // Calculate Time
     const now = new Date();
@@ -214,7 +214,7 @@ export class ReportService implements IReportService {
     const remainingBudget = thisMonthBudget - totalSpendSoFar;
 
     return {
-      financials: {
+      financial: {
         totalSpendSoFar: Number(totalSpendSoFar.toFixed(2)),
         remainingBudget: Number(remainingBudget.toFixed(2)),
         projectedTotal: Number(projectedTotal.toFixed(2)),
@@ -224,7 +224,7 @@ export class ReportService implements IReportService {
         daysPassed,
         totalDaysInMonth,
       },
-      top3Cateogries,
+      top3Categories,
     };
   }
 }

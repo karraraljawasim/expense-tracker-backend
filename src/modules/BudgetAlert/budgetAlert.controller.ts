@@ -3,7 +3,7 @@ import { ApiResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { IBudgetAlertService } from "./budgetAlert.service.js";
 import {
-  getAllTriggeredAlertsQueryschema,
+  getAllTriggeredAlertsQuerySchema,
   getHistoryBudgetAlertByMonthQuerySchema,
 } from "./budgetAlert.validation.js";
 
@@ -24,7 +24,7 @@ export class BudgetAlertController {
 
   getAllTriggeredAlerts = asyncHandler(async (req, res) => {
     const query = req.validateQuery as z.infer<
-      typeof getAllTriggeredAlertsQueryschema
+      typeof getAllTriggeredAlertsQuerySchema
     >;
     const data = await this.#budgetAlertService.getAllTriggeredAlerts(
       req.user!.id,

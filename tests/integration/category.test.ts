@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import request from "supertest";
 import { app } from "../helpers/testApp";
 import {
-  createAuthenticedUser,
+  createAuthenticatedUser,
   createTestCategory,
 } from "../helpers/fixtures.ts";
 
@@ -11,12 +11,12 @@ let userId: Types.ObjectId;
 let token: string;
 
 beforeEach(async () => {
-  const auth = await createAuthenticedUser();
+  const auth = await createAuthenticatedUser();
   token = auth.tokens?.accessToken;
   userId = auth.user?._id;
 });
 
-describe("Create category functinalty", () => {
+describe("Create category functionality", () => {
   const createEndpoint = "/api/categories";
   const createPayload = {
     name: "test",
@@ -48,7 +48,7 @@ describe("Create category functinalty", () => {
     expect(res.status).toBe(400);
   });
 
-  it("create category successfuly", async () => {
+  it("create category successfully", async () => {
     const res = await request(app)
       .post(createEndpoint)
       .set("authorization", `Bearer ${token}`)
@@ -63,7 +63,7 @@ describe("Create category functinalty", () => {
 describe("Get all categories", async () => {
   const getAllEndpoint = "/api/categories";
 
-  it("return cateories to this user successfully", async () => {
+  it("return categories to this user successfully", async () => {
     await createTestCategory(userId, { name: "Food" });
     await createTestCategory(userId, { name: "TV" });
 
@@ -75,14 +75,14 @@ describe("Get all categories", async () => {
     expect(res.status).toBe(200);
   });
 
-  it("return categories belonging to this user not athers", async () => {
+  it("return categories belonging to this user not others", async () => {
     await createTestCategory(userId, { name: "Food" });
 
-    const atherAuthUser = await createAuthenticedUser({
-      email: "ather@example.com",
+    const otherAuthUser = await createAuthenticatedUser({
+      email: "other@example.com",
     });
 
-    await createTestCategory(atherAuthUser.user._id, { name: "ather Food" });
+    await createTestCategory(otherAuthUser.user._id, { name: "other Food" });
 
     const res = await request(app)
       .get(getAllEndpoint)
@@ -156,11 +156,11 @@ describe("Delete category by id", async () => {
     expect(res.status).toBe(401);
   });
 
-  it("can not delete ather users cateogry ", async () => {
-    const atherUserauth = await createAuthenticedUser({
-      email: "atherUser@example.com",
+  it("can not delete other users category ", async () => {
+    const otherAuthUser = await createAuthenticatedUser({
+      email: "otherUser@example.com",
     });
-    const authUserCategory = await createTestCategory(atherUserauth.user._id, {
+    const authUserCategory = await createTestCategory(otherAuthUser.user._id, {
       name: "TV",
     });
 

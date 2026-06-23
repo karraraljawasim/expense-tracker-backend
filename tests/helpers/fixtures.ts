@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { Users } from "../../src/modules/users/user.model.js";
 import { jwtUtils } from "../../src/utils/jwt.js";
-import Categories from "../../src/modules/categories/category.model.js";
+import { Categories } from "../../src/modules/categories/category.model.js";
 import { Expense } from "../../src/modules/expenses/expense.model.js";
 import { Types } from "mongoose";
 import { checkBudgetAlert } from "../../src/helpers/expense.helper.js";
@@ -22,7 +22,7 @@ export async function createTestUser(overrides = {}) {
   });
 }
 
-export async function createAuthenticedUser(overrides = {}) {
+export async function createAuthenticatedUser(overrides = {}) {
   const user = await createTestUser(overrides);
   const tokens = getAuthTokens(user);
 
@@ -35,7 +35,7 @@ export async function createTestCategory(
 ) {
   return await Categories.create({
     userId,
-    name: "test cateogry",
+    name: "test category",
     budgetLimit: 100,
     currency: "USD",
     color: "#6B7280",

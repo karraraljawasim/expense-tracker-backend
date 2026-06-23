@@ -39,7 +39,7 @@ export const categoryIdParamsSchema = z.object({
   }),
 });
 
-export const paginateQury = z.object({
+export const paginateQuery = z.object({
   page: z.string().optional().default("1"),
   pageSize: z.string().optional().default("10"),
 });

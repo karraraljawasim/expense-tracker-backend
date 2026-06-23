@@ -1,6 +1,6 @@
 import { vi, describe, beforeEach, it, expect } from "vitest";
 
-vi.mock("../categorries/category.model", () => ({
+vi.mock("../categories/category.model", () => ({
   Categories: {
     findById: vi.fn(),
   },
@@ -20,7 +20,7 @@ vi.mock("../users/user.model", () => ({
 
 import { ExpenseService } from "../expenses/expense.service.js";
 import { Types } from "mongoose";
-import Categories from "../categories/category.model.js";
+import { Categories } from "../categories/category.model.js";
 import {
   computeAmountInBaseCurrency,
   createfilterObject,
@@ -33,13 +33,13 @@ describe("ExpenseService.create", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("check category ownership before create", async () => {
-    const atherUserId = new Types.ObjectId();
+    const otherUserId = new Types.ObjectId();
     const categoryId = new Types.ObjectId().toString();
     const userId = new Types.ObjectId().toString();
 
     Categories.findById = vi.fn().mockResolvedValue({
       _id: categoryId,
-      userId: atherUserId,
+      userId: otherUserId,
     });
 
     await expect(
@@ -91,13 +91,13 @@ describe("ExpenseService.getAll", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("check category ownership before filter", async () => {
-    const atherUserId = new Types.ObjectId();
+    const otherUserId = new Types.ObjectId();
     const categoryId = new Types.ObjectId().toString();
     const userId = new Types.ObjectId().toString();
 
     Categories.findById = vi.fn().mockResolvedValue({
       _id: categoryId,
-      userId: atherUserId,
+      userId: otherUserId,
     });
 
     const query = {
@@ -105,7 +105,7 @@ describe("ExpenseService.getAll", () => {
       to: "2025-07",
       page: "1",
       pageSize: "10",
-      categoryId: atherUserId.toString(),
+      categoryId: otherUserId.toString(),
     };
 
     await expect(expenseService.getAll(query, userId)).rejects.toThrow();
@@ -113,14 +113,14 @@ describe("ExpenseService.getAll", () => {
 
   it("create filter object correctly", async () => {
     const userId = new Types.ObjectId().toString();
-    const cateogryId = new Types.ObjectId().toString();
+    const categoryId = new Types.ObjectId().toString();
 
     const query = {
       from: "2026-05",
       to: "2026-07",
       page: "1",
       pageSize: "10",
-      categoryId: cateogryId,
+      categoryId: categoryId,
     };
 
     const query2 = {
@@ -128,7 +128,7 @@ describe("ExpenseService.getAll", () => {
       to: "2026-04",
       page: "1",
       pageSize: "10",
-      categoryId: cateogryId,
+      categoryId: categoryId,
     };
 
     const filterObject = createfilterObject(query, userId);

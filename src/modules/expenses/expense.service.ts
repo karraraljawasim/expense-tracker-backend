@@ -10,7 +10,7 @@ import {
   computeAmountInBaseCurrency,
   createfilterObject,
 } from "../../helpers/expense.helper.js";
-import Categories from "../categories/category.model.js";
+import { Categories } from "../categories/category.model.js";
 import { Expense } from "./expense.model.js";
 import {
   GetExpenseByIdResponseDto,
@@ -67,7 +67,7 @@ export class ExpenseService implements IExpenseService {
 
     if (input.isRecurring) {
       if (!input.recurrence || Object.keys(input.recurrence).length === 0) {
-        throw new AppError("Recurrence object requierd", 400);
+        throw new AppError("Recurrence object required", 400);
       }
 
       const startDate = calculateStartDateInMidnight(
@@ -135,7 +135,7 @@ export class ExpenseService implements IExpenseService {
     const page = parseInt(query.page, 10) || 1;
     const pageSize = parseInt(query.pageSize, 10) || 10;
 
-    const expensess = await Expense.aggregate([
+    const expenses = await Expense.aggregate([
       {
         $match: { ...filterObject },
       },
@@ -152,10 +152,10 @@ export class ExpenseService implements IExpenseService {
       },
     ]);
 
-    const totalCount = expensess[0]?.metaData[0]?.totalCount || 0;
+    const totalCount = expenses[0]?.metaData[0]?.totalCount || 0;
 
     return {
-      data: expensess[0].data,
+      data: expenses[0].data,
       metaData: {
         totalCount,
         page,
@@ -397,7 +397,7 @@ export class ExpenseService implements IExpenseService {
       }
     }
 
-    throw new AppError("Update this expense not alowed");
+    throw new AppError("Update this expense not allowed");
   }
 
   async softDelete(
@@ -444,7 +444,7 @@ export class ExpenseService implements IExpenseService {
     if (expense.isRecurring && expense.recurrence?.parentId === null) {
       if (!deleteScope) {
         throw new AppError(
-          "Delete scope is required in  deleted recurrening expense",
+          "Delete scope is required in  deleted recurring expense",
         );
       }
 
@@ -480,7 +480,7 @@ export class ExpenseService implements IExpenseService {
           isDeleted: true,
         });
 
-        const copiesTodelete = await Expense.find({
+        const copiesToDelete = await Expense.find({
           "recurrence.parentId": expenseId,
           isDeleted: true,
         });
@@ -496,7 +496,7 @@ export class ExpenseService implements IExpenseService {
 
         const uniqueMonths = [
           ...new Set(
-            copiesTodelete.map((copy) => copy.date.toISOString().slice(0, 7)),
+            copiesToDelete.map((copy) => copy.date.toISOString().slice(0, 7)),
           ),
         ];
 

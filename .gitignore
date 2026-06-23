@@ -1,4 +1,4 @@
-#Bulid output 
+#Build output 
 dist/
 
 # Environment Variables
@@ -10,3 +10,6 @@ node_modules/
 
 # Misc
 *.tsbuildinfo
+
+# vscode
+.vscode

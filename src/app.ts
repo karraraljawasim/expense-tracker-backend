@@ -7,6 +7,8 @@ import { expenseRouter } from "./modules/expenses/expense.route.js";
 import { budgetAlertRouter } from "./modules/budgetAlert/budgetAlert.routes.js";
 import { userRouter } from "./modules/users/user.routes.js";
 import { reportRouter } from "./modules/reports/report.routes.js";
+import { rateLimiterMiddleware } from "./middlewares/rateLimiter.middleware.js";
+import { authenticate } from "./middlewares/auth.middlewares.js";
 
 const app = express();
 
@@ -15,11 +17,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRouter);
-app.use("/api/categories", categoryRouter);
-app.use("/api/expenses", expenseRouter);
-app.use("/api/budgets", budgetAlertRouter);
-app.use("/api/admin/users", userRouter);
-app.use("/api/reports", reportRouter);
+app.use("/api/categories", authenticate, rateLimiterMiddleware, categoryRouter);
+app.use("/api/expenses", authenticate, rateLimiterMiddleware, expenseRouter);
+app.use("/api/budgets", authenticate, rateLimiterMiddleware, budgetAlertRouter);
+app.use("/api/admin/users", authenticate, rateLimiterMiddleware, userRouter);
+app.use("/api/reports", authenticate, rateLimiterMiddleware, reportRouter);
 
 app.use(globalErrorHandler);
 

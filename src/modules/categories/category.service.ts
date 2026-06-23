@@ -8,7 +8,7 @@ import {
   GoneError,
 } from "../../utils/AppError.js";
 import { Users } from "../users/user.model.js";
-import Categories from "./category.model.js";
+import { Categories } from "./category.model.js";
 import { Category } from "./category.types.js";
 import {
   CreateCategoryRequestDto,
@@ -135,9 +135,9 @@ export class CategoryService implements ICategoryService {
       { timestamps: true },
     );
 
-    const updatedCateogry = await Categories.findById(categoryId);
+    const updatedCategory = await Categories.findById(categoryId);
 
-    return updatedCateogry!;
+    return updatedCategory!;
   }
 
   async deleteById(categoryId: string, userId: string) {
@@ -150,7 +150,7 @@ export class CategoryService implements ICategoryService {
     }
 
     if (!category.userId.equals(userId)) {
-      throw new UnauthorizedError("You not owner to this cateogry");
+      throw new UnauthorizedError("You not owner to this category");
     }
 
     const deletedCategory = await Categories.findByIdAndUpdate(categoryId, {

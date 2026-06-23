@@ -8,7 +8,7 @@ export const connectDB = async (): Promise<void> => {
       socketTimeoutMS: 45000,
     });
 
-    console.log(`MongoDB cunnected successfully`);
+    console.log(`MongoDB connected successfully`);
   } catch (error) {
     console.error(`MongoDB connection error`, error);
     process.exit(1);

@@ -26,7 +26,7 @@ export const globalErrorHandler = (
     return;
   }
 
-  console.error(`Unhandler Error`);
+  console.error(`Unhandier Error`);
 
   res.status(500).json({
     success: false,

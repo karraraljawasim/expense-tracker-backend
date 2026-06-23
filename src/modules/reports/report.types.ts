@@ -2,12 +2,12 @@ import { Types } from "mongoose";
 import { IExpense } from "../expenses/expense.types.js";
 
 export type GetMonthlyReportResponseDto = {
-  totalExpensesOveral: number;
+  totalExpensesOverall: number;
   totalCategories: number;
   spendingByCategory: {
     categoryId: Types.ObjectId;
     totalSpend: number;
-    avargSpend: number;
+    averageSpend: number;
     expenseCount: number;
   }[];
 };
@@ -18,7 +18,7 @@ export type GetExpenseReportByCategoryResponseDto = {
 };
 
 export type GetSummaryResponseDto = {
-  financials: {
+  financial: {
     totalSpendSoFar: number;
     remainingBudget: number;
     projectedTotal: number;
@@ -28,5 +28,5 @@ export type GetSummaryResponseDto = {
     daysPassed: number;
     totalDaysInMonth: number;
   };
-  top3Cateogries: any[];
+  top3Categories: any[];
 };

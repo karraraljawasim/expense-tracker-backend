@@ -1,6 +1,5 @@
 import mongoose, { Schema, model } from "mongoose";
 import { IRefreshToken } from "./auth.types.js";
-import { env } from "../../config/env.js";
 
 const refreshTokenSchema = new Schema<IRefreshToken>(
   {
@@ -9,14 +8,17 @@ const refreshTokenSchema = new Schema<IRefreshToken>(
       ref: "User",
       required: true,
     },
-    token: {
+    hashedToken: {
       type: String,
       required: true,
-      unique: env.NODE_ENV === "test" ? false : true,
     },
     expiresAt: {
       type: Date,
       required: true,
+    },
+    isRevoked: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },
@@ -24,6 +26,7 @@ const refreshTokenSchema = new Schema<IRefreshToken>(
 
 // Indexes
 refreshTokenSchema.index({ userId: 1 });
+refreshTokenSchema.index({ hashedToken: 1 });
 
 export const RefreshToken = model<IRefreshToken>(
   "RefreshToken",

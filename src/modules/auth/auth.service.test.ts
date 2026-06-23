@@ -1,12 +1,15 @@
 import { vi, describe, beforeEach, it, expect } from "vitest";
 import bcrypt from "bcrypt";
-import { getAuthTokens } from "../../../tests/helpers/fixtures.js";
+import {
+  createAuthenticatedUser,
+  getAuthTokens,
+} from "../../../tests/helpers/fixtures.js";
 
 vi.mock("./auth.model", () => ({
   RefreshToken: {
     create: vi.fn(),
-    deleteOne: vi.fn(),
-    deleteMany: vi.fn(),
+    updateOne: vi.fn(),
+    updateMany: vi.fn(),
     findOne: vi.fn(),
   },
 }));
@@ -67,7 +70,7 @@ describe("AuthService.register", () => {
     expect(Users.create).not.toHaveBeenCalled();
   });
 
-  it("Should return access token and refersh token on successful", async () => {
+  it("Should return access token and refresh token on successful", async () => {
     Users.findOne = vi.fn().mockResolvedValue(null);
     Users.create = vi.fn().mockResolvedValue({
       _id: new Types.ObjectId(),
@@ -92,7 +95,7 @@ describe("AuthService.register", () => {
   });
 });
 
-describe("AuthSerice.login", () => {
+describe("AuthService.login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -112,7 +115,7 @@ describe("AuthSerice.login", () => {
     Users.findOne = vi.fn().mockResolvedValue({
       _id: new Types.ObjectId(),
       email: "test@example.com",
-      passwordHash: await bcrypt.hash("corrict password", 10),
+      passwordHash: await bcrypt.hash("correct password", 10),
       role: "user",
     });
 
@@ -125,7 +128,7 @@ describe("AuthSerice.login", () => {
   });
 
   it("Should return tokens if email and password correct", async () => {
-    const passwordHash = await bcrypt.hash("coorectPassword", 10);
+    const passwordHash = await bcrypt.hash("correctPassword", 10);
     Users.findOne = vi.fn().mockResolvedValue({
       _id: new Types.ObjectId(),
       email: "test@example.com",
@@ -136,14 +139,14 @@ describe("AuthSerice.login", () => {
 
     const result = await authService.login({
       email: "test@example.com",
-      password: "coorectPassword",
+      password: "correctPassword",
     });
 
     expect(result).toHaveProperty("accessToken");
     expect(result).toHaveProperty("refreshToken");
   });
 
-  it("Sholud return the same error message for wrong password and email", async () => {
+  it("Should return the same error message for wrong password and email", async () => {
     Users.findOne = vi.fn().mockResolvedValue(null);
 
     let messageForWrongEmail: any;
@@ -209,43 +212,51 @@ describe("AuthService.refresh", () => {
   it("Throw error if token is not found", async () => {
     RefreshToken.findOne = vi.fn().mockResolvedValue(null);
 
-    await expect(authService.refresh("notFuondToken")).rejects.toThrow();
+    await expect(authService.refresh("notFoundToken")).rejects.toThrow();
   });
 
   it("Throw error if token is stolen", async () => {
-    const atherUserId = new Types.ObjectId();
+    const otherUserId = new Types.ObjectId();
     const userId = new Types.ObjectId();
 
     const tokens = getAuthTokens({ _id: userId, role: "user" });
 
     RefreshToken.findOne = vi.fn().mockResolvedValue({
       _id: "tokenId",
-      userId: atherUserId,
+      userId: otherUserId,
       token: tokens.refreshToken,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
 
-    RefreshToken.deleteOne = vi.fn().mockResolvedValue({});
+    RefreshToken.updateOne = vi.fn().mockResolvedValue({});
 
     await expect(authService.refresh(tokens.refreshToken)).rejects.toThrow();
-    expect(RefreshToken.deleteOne).toHaveBeenCalledTimes(1);
+    expect(RefreshToken.updateOne).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("Auth.logout", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("delete refresh token on logout", async () => {
-    RefreshToken.deleteOne = vi.fn().mockResolvedValue({ deletedCount: 1 });
+  it("revoke refresh token on logout", async () => {
+    RefreshToken.updateOne = vi.fn().mockResolvedValue({ updatedCount: 1 });
 
-    await authService.logout("sameRefreshToken");
+    const otherUser = await createAuthenticatedUser({
+      email: "email@example.com",
+    });
 
-    expect(RefreshToken.deleteOne).toHaveBeenCalledTimes(1);
+    await authService.logout("sameRefreshToken", otherUser.tokens.accessToken);
+
+    expect(RefreshToken.updateOne).toHaveBeenCalledTimes(1);
   });
 
   it("does not throw error if token not found", async () => {
-    RefreshToken.deleteOne = vi.fn().mockResolvedValue({ deleledCount: 0 });
-
-    await expect(authService.logout("notExistToken")).resolves.not.toThrow();
+    RefreshToken.updateOne = vi.fn().mockResolvedValue({ updatedCount: 0 });
+    const otherUser = await createAuthenticatedUser({
+      email: "email@example.com",
+    });
+    await expect(
+      authService.logout("notExistToken", otherUser.tokens.accessToken),
+    ).resolves.not.toThrow();
   });
 });

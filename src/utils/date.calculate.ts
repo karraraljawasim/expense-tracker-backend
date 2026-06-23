@@ -1,8 +1,8 @@
 export function calculateStartDateInMidnight(startDate: string) {
-  const startdate = new Date(startDate);
-  startdate.setHours(0, 0, 0, 0);
+  const startedDate = new Date(startDate);
+  startedDate.setHours(0, 0, 0, 0);
 
-  return startdate;
+  return startedDate;
 }
 
 export function getStartAndStartNextMonth(date: Date = new Date()) {

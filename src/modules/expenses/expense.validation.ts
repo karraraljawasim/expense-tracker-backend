@@ -9,10 +9,10 @@ export const recurrenceSchema = z.object({
 });
 
 export const createExpenseSchema = z.object({
-  categoryId: z.string().refine((vlaue) => Types.ObjectId.isValid(vlaue), {
+  categoryId: z.string().refine((value) => Types.ObjectId.isValid(value), {
     message: "Invalid object id",
   }),
-  amount: z.number().min(0, "Amount must be gerater than 0"),
+  amount: z.number().min(0, "Amount must be greater than 0"),
   currency: z.string().optional().default("USD"),
   note: z.string().max(500, "Too long note").nullable().default(null),
   date: z.string(),
@@ -54,7 +54,7 @@ export const getAllExpensesQuerySchema = z.object({
     }),
   categoryId: z
     .string()
-    .refine((vlaue) => Types.ObjectId.isValid(vlaue), {
+    .refine((value) => Types.ObjectId.isValid(value), {
       message: "Invalid object id",
     })
     .optional(),
@@ -68,8 +68,8 @@ export const getAllExpensesQuerySchema = z.object({
   pageSize: z.string().optional().default("10"),
 });
 
-export const expenseIdPramseSchema = z.object({
-  expenseId: z.string().refine((vlaue) => Types.ObjectId.isValid(vlaue), {
+export const expenseIdPramsSchema = z.object({
+  expenseId: z.string().refine((value) => Types.ObjectId.isValid(value), {
     message: "Invalid object id",
   }),
 });

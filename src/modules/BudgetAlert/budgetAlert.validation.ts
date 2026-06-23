@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 import { z } from "zod";
 
-export const getAllTriggeredAlertsQueryschema = z.object({
+export const getAllTriggeredAlertsQuerySchema = z.object({
   isRead: z.boolean().optional().default(false),
   month: z
     .string()
@@ -22,7 +22,7 @@ export const getAllTriggeredAlertsQueryschema = z.object({
   pageSize: z.string().optional().default("10"),
 });
 
-export const budgetAlertIdPramseSchema = z.object({
+export const budgetAlertIdPramsSchema = z.object({
   budgetAlertId: z.string().refine((value) => Types.ObjectId.isValid(value), {
     message: "Invalid object id format",
   }),
@@ -47,7 +47,7 @@ export const getHistoryBudgetAlertByMonthQuerySchema = z.object({
 });
 
 export type GetAllTriggeredAlertsQueryDto = z.infer<
-  typeof getAllTriggeredAlertsQueryschema
+  typeof getAllTriggeredAlertsQuerySchema
 >;
 
 export type GetHistoryBudgetAlertByMonthQuery = z.infer<

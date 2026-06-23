@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import request from "supertest";
 import { app } from "../helpers/testApp.ts";
 import {
-  createAuthenticedUser,
+  createAuthenticatedUser,
   createTestCategory,
   createTestExpense,
 } from "../helpers/fixtures.ts";
@@ -12,15 +12,15 @@ let userId: Types.ObjectId;
 let token: string;
 
 beforeEach(async () => {
-  const auth = await createAuthenticedUser();
+  const auth = await createAuthenticatedUser();
   token = auth.tokens?.accessToken;
   userId = auth.user?._id;
 });
 
-describe("get monthly report functinalty", () => {
+describe("get monthly report functionality", () => {
   const endpoint = "/api/reports/monthly?month=2026-06";
 
-  it("get report succassfully", async () => {
+  it("get report successfully", async () => {
     const category = await createTestCategory(userId);
     const category2 = await createTestCategory(userId, { name: "test 2" });
 
@@ -38,8 +38,8 @@ describe("get monthly report functinalty", () => {
   });
 });
 
-describe("get report by category functinalty", () => {
-  it("get report succassfully", async () => {
+describe("get report by category functionality", () => {
+  it("get report successfully", async () => {
     const category = await createTestCategory(userId);
     const category2 = await createTestCategory(userId, { name: "test 2" });
 
@@ -74,18 +74,18 @@ describe("get report by category functinalty", () => {
     );
   });
 
-  it("return error if category not belong to the amame user", async () => {
-    const atherAuthUser = await createAuthenticedUser({
-      email: "ather@example.com",
+  it("return error if category not belong to the same user", async () => {
+    const otherAuthUser = await createAuthenticatedUser({
+      email: "other@example.com",
     });
 
-    const atherCategory = await createTestCategory(atherAuthUser.user._id);
+    const otherCategory = await createTestCategory(otherAuthUser.user._id);
 
-    await createTestExpense(userId, atherCategory._id);
-    await createTestExpense(userId, atherCategory._id);
+    await createTestExpense(userId, otherCategory._id);
+    await createTestExpense(userId, otherCategory._id);
 
     const res = await request(app)
-      .get(`/api/reports/categories/${atherCategory._id}`)
+      .get(`/api/reports/categories/${otherCategory._id}`)
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(404);
@@ -108,17 +108,17 @@ describe("get report by category functinalty", () => {
   });
 });
 
-describe("get summary functinalty", () => {
+describe("get summary functionality", () => {
   const endpoint = `/api/reports/summary`;
 
-  it("get summary succassfully", async () => {
+  it("get summary successfully", async () => {
     const category = await createTestCategory(userId, {
-      badgetLimit: 200,
+      budgetLimit: 200,
       name: "test",
     });
     const category2 = await createTestCategory(userId, {
       name: "test 2",
-      badgetLimit: 150,
+      budgetLimit: 150,
     });
 
     await createTestExpense(userId, category._id, {
@@ -146,8 +146,8 @@ describe("get summary functinalty", () => {
       .send({ thisMonthBudget: 300 });
 
     expect(res.status).toBe(200);
-    expect(res.body.data?.financials.totalSpendSoFar).toBe(240);
-    expect(res.body.data?.financials.remainingBudget).toBe(60);
-    expect(res.body.data?.top3Cateogries[0]._id).toBe(String(category._id));
+    expect(res.body.data?.financial.totalSpendSoFar).toBe(240);
+    expect(res.body.data?.financial.remainingBudget).toBe(60);
+    expect(res.body.data?.top3Categories[0]._id).toBe(String(category._id));
   });
 });

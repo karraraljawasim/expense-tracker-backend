@@ -11,8 +11,9 @@ export type TokenPair = {
 
 export type IRefreshToken = {
   userId: Types.ObjectId;
-  token: string;
+  hashedToken: string;
   expiresAt: Date;
-  createdAt: Date;
+  isRevoked?: boolean;
+  createdAt?: Date;
   updatedAt?: Date;
 };

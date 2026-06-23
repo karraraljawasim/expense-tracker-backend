@@ -42,4 +42,4 @@ categorySchema.index({ userId: 1, name: 1 }, { unique: true });
 
 const Categories = model<Category>("Categories", categorySchema);
 
-export default Categories;
+export { Categories };

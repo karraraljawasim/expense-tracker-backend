@@ -1,11 +1,10 @@
 import { Router } from "express";
 import { ExpenseController } from "./expense.controller.js";
 import { ExpenseService } from "./expense.service.js";
-import { authenticate } from "../../middlewares/auth.middlewares.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import {
   createExpenseSchema,
-  expenseIdPramseSchema,
+  expenseIdPramsSchema,
   expenseSoftDeleteQuerySchema,
   getAllExpensesQuerySchema,
   updateExpenseSchema,
@@ -17,24 +16,15 @@ export const expenseRouter = Router();
 
 expenseRouter
   .route("/")
-  .post(authenticate, validate(createExpenseSchema), expenseController.create)
-  .get(
-    authenticate,
-    validate(getAllExpensesQuerySchema, "query"),
-    expenseController.getAll,
-  );
+  .post(validate(createExpenseSchema), expenseController.create)
+  .get(validate(getAllExpensesQuerySchema, "query"), expenseController.getAll);
 
 expenseRouter
   .route("/:expenseId")
-  .get(
-    authenticate,
-    validate(expenseIdPramseSchema, "params"),
-    expenseController.getById,
-  )
-  .patch(authenticate, validate(updateExpenseSchema), expenseController.update)
+  .get(validate(expenseIdPramsSchema, "params"), expenseController.getById)
+  .patch(validate(updateExpenseSchema), expenseController.update)
   .delete(
-    authenticate,
-    validate(expenseIdPramseSchema, "params"),
+    validate(expenseIdPramsSchema, "params"),
     validate(expenseSoftDeleteQuerySchema, "query"),
     expenseController.softDelete,
   );

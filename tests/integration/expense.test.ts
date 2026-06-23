@@ -3,8 +3,7 @@ import { Types } from "mongoose";
 import request from "supertest";
 import { app } from "../helpers/testApp";
 import {
-  createAuthenticedUser,
-  createTestBudgetAlert,
+  createAuthenticatedUser,
   createTestCategory,
   createTestExpense,
 } from "../helpers/fixtures.ts";
@@ -13,12 +12,12 @@ let userId: Types.ObjectId;
 let token: string;
 
 beforeEach(async () => {
-  const auth = await createAuthenticedUser();
+  const auth = await createAuthenticatedUser();
   token = auth.tokens?.accessToken;
   userId = auth.user?._id;
 });
 
-describe("create expense functinalty", () => {
+describe("create expense functionary", () => {
   const endpoint = "/api/expenses";
   const createExpensePayload = {
     amount: 50,
@@ -32,7 +31,7 @@ describe("create expense functinalty", () => {
     attachmentUrl: null,
   };
 
-  it("create expense succassfully", async () => {
+  it("create expense successfully", async () => {
     const category = await createTestCategory(userId);
 
     const res = await request(app)
@@ -45,7 +44,7 @@ describe("create expense functinalty", () => {
     expect(res.body.data.amount).toBe(50);
   });
 
-  it("create recurrence expense succassfully", async () => {
+  it("create recurrence expense successfully", async () => {
     const category = await createTestCategory(userId);
 
     const res = await request(app)
@@ -59,8 +58,8 @@ describe("create expense functinalty", () => {
         recurrence: {
           frequency: "monthly",
           interval: 1,
-          startDate: new Date("2026-06-22"),
-          nextRunAt: new Date("2026-06-22"),
+          startDate: new Date("2026-06-25"),
+          nextRunAt: new Date("2026-06-26"),
           endDate: null,
         },
       });
@@ -71,7 +70,7 @@ describe("create expense functinalty", () => {
     expect(res.body.data.recurrence.frequency).toBe("monthly");
   });
 
-  it("falid in create recurrence expense if start date in past", async () => {
+  it("felid in create recurrence expense if start date in past", async () => {
     const category = await createTestCategory(userId);
 
     const res = await request(app)
@@ -95,38 +94,38 @@ describe("create expense functinalty", () => {
   });
 
   it("throw error if category not belong to the same user", async () => {
-    const atherAuthUser = await createAuthenticedUser({
-      email: "atherUser@example.com",
+    const otherAuthUser = await createAuthenticatedUser({
+      email: "otherUser@example.com",
     });
 
-    const atherCategory = await createTestCategory(atherAuthUser.user._id);
+    const otherCategory = await createTestCategory(otherAuthUser.user._id);
 
     const res = await request(app)
       .post(endpoint)
       .set("Authorization", `Bearer ${token}`)
-      .send({ ...createExpensePayload, categoryId: atherCategory._id, userId });
+      .send({ ...createExpensePayload, categoryId: otherCategory._id, userId });
 
     expect(res.status).toBe(401);
   });
 
   it("throw error if category not belong to the same user", async () => {
-    const atherAuthUser = await createAuthenticedUser({
-      email: "atherUser@example.com",
+    const otherAuthUser = await createAuthenticatedUser({
+      email: "otherUser@example.com",
     });
 
-    const atherCategory = await createTestCategory(atherAuthUser.user._id);
+    const otherCategory = await createTestCategory(otherAuthUser.user._id);
 
     const res = await request(app)
       .post(endpoint)
       .set("Authorization", `Bearer ${token}`)
-      .send({ ...createExpensePayload, categoryId: atherCategory._id, userId });
+      .send({ ...createExpensePayload, categoryId: otherCategory._id, userId });
 
     expect(res.status).toBe(401);
   });
 });
 
-describe("update expense functinalty", () => {
-  it("update expense succassfully", async () => {
+describe("update expense functionary", () => {
+  it("update expense successfully", async () => {
     const category = await createTestCategory(userId);
     const expense = await createTestExpense(userId, category._id, {
       amount: 500,
@@ -154,8 +153,8 @@ describe("update expense functinalty", () => {
   });
 });
 
-describe("soft delete expense functinalty", () => {
-  it("soft delete expense succassfully", async () => {
+describe("soft delete expense functionary", () => {
+  it("soft delete expense successfully", async () => {
     const category = await createTestCategory(userId);
     const expense = await createTestExpense(userId, category._id, {
       amount: 500,
@@ -168,29 +167,29 @@ describe("soft delete expense functinalty", () => {
     expect(res.status).toBe(204);
   });
 
-  it("disallow to deleted ather expense", async () => {
-    const atherAuthUser = await createAuthenticedUser({
-      email: "ather@example.com",
+  it("disallow to deleted other expense", async () => {
+    const otherAuthUser = await createAuthenticatedUser({
+      email: "other@example.com",
     });
-    const atherCategory = await createTestCategory(atherAuthUser.user._id, {
+    const otherCategory = await createTestCategory(otherAuthUser.user._id, {
       name: "test 1",
     });
 
-    const atherExpense = await createTestExpense(
-      atherAuthUser.user._id,
-      atherCategory._id,
+    const otherExpense = await createTestExpense(
+      otherAuthUser.user._id,
+      otherCategory._id,
     );
 
     const res = await request(app)
-      .delete(`/api/expenses/${atherExpense._id}`)
+      .delete(`/api/expenses/${otherExpense._id}`)
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(401);
   });
 });
 
-describe("get expense by id functinalty", () => {
-  it("get expense by idsuccassfully", async () => {
+describe("get expense by id functionary", () => {
+  it("get expense by id successfully", async () => {
     const category = await createTestCategory(userId);
     const expense = await createTestExpense(userId, category._id, {
       amount: 500,

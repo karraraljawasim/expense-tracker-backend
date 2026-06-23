@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { BudgetAlert } from "./budgetAlert.model.js";
-import Categories from "../categories/category.model.js";
+import { Categories } from "../categories/category.model.js";
 import { Expense } from "../expenses/expense.model.js";
 import { IBudgetAlert, MonthlyBudgetResponse } from "./budgetAlert.types.js";
 import {
@@ -205,27 +205,27 @@ export class BudgetAlertService implements IBudgetAlertService {
     };
   }
 
-  async markBudgetAlertAsRead(userId: string, bugetAlertId: string) {
-    const bugetAlert = await BudgetAlert.findById(bugetAlertId);
-    if (!bugetAlert || bugetAlert.userId.toString() !== userId) {
-      throw new NotFoundError("BugetAlert");
+  async markBudgetAlertAsRead(userId: string, budgetAlertId: string) {
+    const budgetAlert = await BudgetAlert.findById(budgetAlertId);
+    if (!budgetAlert || budgetAlert.userId.toString() !== userId) {
+      throw new NotFoundError("BudgetAlert");
     }
 
-    if (bugetAlert.isRead) {
-      return bugetAlert;
+    if (budgetAlert.isRead) {
+      return budgetAlert;
     }
 
-    await BudgetAlert.findByIdAndUpdate(bugetAlertId, {
+    await BudgetAlert.findByIdAndUpdate(budgetAlertId, {
       isRead: true,
     });
 
-    const updatedBugetAlert = await BudgetAlert.findById(bugetAlertId);
+    const updatedBudgetAlert = await BudgetAlert.findById(budgetAlertId);
 
-    if (!updatedBugetAlert) {
-      throw new AppError("Mark budget read falied");
+    if (!updatedBudgetAlert) {
+      throw new AppError("Mark budget read failed");
     }
 
-    return updatedBugetAlert;
+    return updatedBudgetAlert;
   }
 
   async markAllBudgetAlertAsRead(userId: string) {

@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import request from "supertest";
 import { app } from "../helpers/testApp";
 import {
-  createAuthenticedUser,
+  createAuthenticatedUser,
   createTestBudgetAlert,
   createTestCategory,
   createTestExpense,
@@ -13,15 +13,15 @@ let userId: Types.ObjectId;
 let token: string;
 
 beforeEach(async () => {
-  const auth = await createAuthenticedUser();
+  const auth = await createAuthenticatedUser();
   token = auth.tokens?.accessToken;
   userId = auth.user?._id;
 });
 
-describe("get monthly budget status functinalty", () => {
+describe("get monthly budget status functionality", () => {
   const endpoint = "/api/budgets";
 
-  it("get budget status succassfully", async () => {
+  it("get budget status successfully", async () => {
     const category = await createTestCategory(userId, { budgetLimit: 100 });
     const category2 = await createTestCategory(userId, {
       name: "Test 2",
@@ -43,10 +43,10 @@ describe("get monthly budget status functinalty", () => {
   });
 });
 
-describe("get all triggered budget status functinalty", () => {
+describe("get all triggered budget status functionality", () => {
   const endpoint = "/api/budgets/alerts?month=2026-06";
 
-  it("get triggered budget succassfully", async () => {
+  it("get triggered budget successfully", async () => {
     const category = await createTestCategory(userId, { budgetLimit: 100 });
     const category2 = await createTestCategory(userId, {
       name: "Test 2",
@@ -68,8 +68,8 @@ describe("get all triggered budget status functinalty", () => {
   });
 });
 
-describe("mark budget isRead functinalty", () => {
-  it("mark budget succassfully", async () => {
+describe("mark budget isRead functionality", () => {
+  it("mark budget successfully", async () => {
     const category = await createTestCategory(userId, { budgetLimit: 100 });
 
     const budgetAlert = await createTestBudgetAlert(userId, category._id, {
@@ -86,8 +86,8 @@ describe("mark budget isRead functinalty", () => {
   });
 });
 
-describe("mark all allerts isRead functinalty", () => {
-  it("mark all allerts succassfully", async () => {
+describe("mark all alerts isRead functionality", () => {
+  it("mark all alerts successfully", async () => {
     const category = await createTestCategory(userId, { budgetLimit: 100 });
     const category2 = await createTestCategory(userId, {
       budgetLimit: 100,
