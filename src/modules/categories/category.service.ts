@@ -9,11 +9,16 @@ import {
 } from "../../utils/AppError.js";
 import { Users } from "../users/user.model.js";
 import { Categories } from "./category.model.js";
-import { Category } from "./category.types.js";
+import { CachedCategories, Category } from "./category.types.js";
 import {
   CreateCategoryRequestDto,
   UpdateCategoryRequestDto,
 } from "./category.validation.js";
+import {
+  clearCachedCategories,
+  getCachedCategories,
+  setCacheCategories,
+} from "./category.cache.js";
 
 export interface ICategoryService {
   create: (
@@ -56,6 +61,8 @@ export class CategoryService implements ICategoryService {
       throw new AppError("Create new category failed");
     }
 
+    await clearCachedCategories(input.userId);
+
     return newCategory;
   }
 
@@ -63,29 +70,43 @@ export class CategoryService implements ICategoryService {
     const page = parseInt(query.page, 10) || 1;
     const pageSize = parseInt(query.pageSize, 10) || 10;
 
-    const categories = await Categories.aggregate([
-      {
-        $match: {
-          userId: new Types.ObjectId(userId),
-          isDeleted: false,
-        },
-      },
-      {
-        $sort: {
-          createdAt: 1,
-        },
-      },
-      {
-        $facet: {
-          metaData: [{ $count: "totalCount" }],
-          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
-        },
-      },
-    ]);
+    let cache = (await getCachedCategories(
+      userId,
+    )) as unknown as CachedCategories | null;
 
-    const totalCount = categories[0]?.metaData[0]?.totalCount || 0;
+    let categories: any;
+
+    if (cache === null || page !== cache.page || pageSize !== cache.pageSize) {
+      cache = null;
+      categories = await Categories.aggregate([
+        {
+          $match: {
+            userId: new Types.ObjectId(userId),
+            isDeleted: false,
+          },
+        },
+        {
+          $sort: {
+            createdAt: 1,
+          },
+        },
+        {
+          $facet: {
+            metaData: [{ $count: "totalCount" }],
+            data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+          },
+        },
+      ]);
+
+      await setCacheCategories(userId, categories, page, pageSize);
+    }
+
+    const totalCount = cache
+      ? cache.categories[0]?.metaData[0]?.totalCount || 0
+      : categories[0]?.metaData[0]?.totalCount || 0;
+
     return {
-      data: categories[0].data,
+      data: cache ? cache.categories[0].data : categories[0].data,
       metaData: {
         totalCount,
         page,
@@ -135,6 +156,7 @@ export class CategoryService implements ICategoryService {
       { timestamps: true },
     );
 
+    await clearCachedCategories(userId);
     const updatedCategory = await Categories.findById(categoryId);
 
     return updatedCategory!;
@@ -159,5 +181,6 @@ export class CategoryService implements ICategoryService {
     if (!deletedCategory) {
       throw new AppError("Delete category failed");
     }
+    await clearCachedCategories(userId);
   }
 }

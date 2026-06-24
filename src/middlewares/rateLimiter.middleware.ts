@@ -7,7 +7,7 @@ const client = await initializeRedisClient();
 const tokenBucket = new RateLimiterRedis({
   storeClient: client,
   useRedisPackage: true,
-  points: 4,
+  points: 30,
   duration: 20,
 });
 

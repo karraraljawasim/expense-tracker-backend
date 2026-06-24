@@ -22,7 +22,11 @@ expenseRouter
 expenseRouter
   .route("/:expenseId")
   .get(validate(expenseIdPramsSchema, "params"), expenseController.getById)
-  .patch(validate(updateExpenseSchema), expenseController.update)
+  .patch(
+    validate(expenseIdPramsSchema, "params"),
+    validate(updateExpenseSchema),
+    expenseController.update,
+  )
   .delete(
     validate(expenseIdPramsSchema, "params"),
     validate(expenseSoftDeleteQuerySchema, "query"),

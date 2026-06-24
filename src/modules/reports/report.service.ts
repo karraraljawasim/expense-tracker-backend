@@ -10,6 +10,7 @@ import { PaginationResponseDto } from "../../types/pagination.js";
 import { Categories } from "../categories/category.model.js";
 import { NotFoundError } from "../../utils/AppError.js";
 import { getStartAndStartNextMonth } from "../../utils/date.calculate.js";
+import { getCachedSummary, setCacheSummary } from "./report.cache.js";
 
 export interface IReportService {
   getMonthlyReport: (
@@ -157,43 +158,48 @@ export class ReportService implements IReportService {
   async getSummary(userId: string, thisMonthBudget: number) {
     const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth();
 
-    const reportSummary = await Expense.aggregate([
-      {
-        $match: {
-          userId: new Types.ObjectId(userId),
-          date: { $gte: startOfMonth, $lt: startOfNextMonth },
-          isDeleted: false,
+    let reportSummary = await getCachedSummary(userId);
+    if (reportSummary === null) {
+      reportSummary = await Expense.aggregate([
+        {
+          $match: {
+            userId: new Types.ObjectId(userId),
+            date: { $gte: startOfMonth, $lt: startOfNextMonth },
+            isDeleted: false,
+          },
         },
-      },
-      {
-        $facet: {
-          totalSpendData: [
-            {
-              $group: {
-                _id: null,
-                totalSpendSoFar: { $sum: "$amountInBaseCurrency" },
+        {
+          $facet: {
+            totalSpendData: [
+              {
+                $group: {
+                  _id: null,
+                  totalSpendSoFar: { $sum: "$amountInBaseCurrency" },
+                },
               },
-            },
-          ],
-          top3Categories: [
-            {
-              $group: {
-                _id: "$categoryId",
-                totalSpend: { $sum: "$amountInBaseCurrency" },
+            ],
+            top3Categories: [
+              {
+                $group: {
+                  _id: "$categoryId",
+                  totalSpend: { $sum: "$amountInBaseCurrency" },
+                },
               },
-            },
-            {
-              $sort: {
-                totalSpend: -1,
+              {
+                $sort: {
+                  totalSpend: -1,
+                },
               },
-            },
-            {
-              $limit: 3,
-            },
-          ],
+              {
+                $limit: 3,
+              },
+            ],
+          },
         },
-      },
-    ]);
+      ]);
+
+      await setCacheSummary(userId, reportSummary);
+    }
 
     const report = reportSummary[0];
     const totalSpendSoFar = report?.totalSpendData[0]?.totalSpendSoFar || 0;

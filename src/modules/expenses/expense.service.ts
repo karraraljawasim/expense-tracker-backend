@@ -24,6 +24,7 @@ import {
 } from "./expense.validation.js";
 import { PaginationResponseDto } from "../../types/pagination.js";
 import { calculateStartDateInMidnight } from "../../utils/date.calculate.js";
+import { clearCachedSummary } from "../reports/report.cache.js";
 
 let exchangeRate = 1;
 export interface IExpenseService {
@@ -114,6 +115,7 @@ export class ExpenseService implements IExpenseService {
       });
     }
 
+    await clearCachedSummary(userId);
     await checkBudgetAlert(userId, input.categoryId);
 
     return newExpense;
@@ -260,6 +262,7 @@ export class ExpenseService implements IExpenseService {
         throw new AppError("Update expense failed");
       }
 
+      await clearCachedSummary(userId);
       return updatedExpense;
     }
 
@@ -291,6 +294,7 @@ export class ExpenseService implements IExpenseService {
         throw new AppError("Update expense failed");
       }
 
+      await clearCachedSummary(userId);
       return updatedExpense;
     }
 
@@ -316,6 +320,8 @@ export class ExpenseService implements IExpenseService {
         if (!updatedExpense) {
           throw new AppError("Update expense failed");
         }
+
+        await clearCachedSummary(userId);
         return updatedExpense;
       }
 
@@ -393,6 +399,7 @@ export class ExpenseService implements IExpenseService {
           throw new AppError("Update expense failed");
         }
 
+        await clearCachedSummary(userId);
         return updatedExpense;
       }
     }
@@ -425,6 +432,8 @@ export class ExpenseService implements IExpenseService {
       });
 
       await checkBudgetAlert(userId, expense.categoryId.toString());
+
+      await clearCachedSummary(userId);
       return;
     }
 
@@ -438,6 +447,8 @@ export class ExpenseService implements IExpenseService {
         expense.categoryId.toString(),
         expense.date,
       );
+
+      await clearCachedSummary(userId);
       return;
     }
 
@@ -454,6 +465,7 @@ export class ExpenseService implements IExpenseService {
           "recurrence.endDate": new Date(),
         });
 
+        await clearCachedSummary(userId);
         return;
       }
 
@@ -472,6 +484,7 @@ export class ExpenseService implements IExpenseService {
           },
         );
 
+        await clearCachedSummary(userId);
         return;
       }
 
@@ -508,6 +521,7 @@ export class ExpenseService implements IExpenseService {
           );
         }
 
+        await clearCachedSummary(userId);
         return;
       }
     }

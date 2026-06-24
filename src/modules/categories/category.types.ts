@@ -11,3 +11,9 @@ export type Category = {
   createAt?: Date;
   updateAt?: Date;
 };
+
+export type CachedCategories = {
+  categories: any;
+  page: number;
+  pageSize: number;
+};
