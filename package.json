@@ -29,13 +29,16 @@
     "@types/node-cron": "^3.0.11",
     "@types/redis": "^4.0.10",
     "@types/supertest": "^7.2.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "mongodb-memory-server": "^11.2.0",
+    "prettier": "3.9.3",
     "supertest": "^7.2.2",
     "tsx": "^4.22.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "crypto": "^1.0.1",
@@ -47,6 +50,7 @@
     "node-cron": "^4.2.1",
     "rate-limiter-flexible": "^11.2.0",
     "redis": "^6.0.0",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^4.4.3"
   }
 }

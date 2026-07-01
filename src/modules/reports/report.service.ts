@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { Expense } from "../expenses/expense.model.js";
-import { GetMonthlyReportQuery } from "./report.validation.js";
+import { GetMonthlyReportQuery, GetSummaryQuery } from "./report.validation.js";
 import {
   GetExpenseReportByCategoryResponseDto,
   GetMonthlyReportResponseDto,
@@ -8,7 +8,7 @@ import {
 } from "./report.types.js";
 import { PaginationResponseDto } from "../../types/pagination.js";
 import { Categories } from "../categories/category.model.js";
-import { NotFoundError } from "../../utils/AppError.js";
+import { AppError, NotFoundError } from "../../utils/AppError.js";
 import { getStartAndStartNextMonth } from "../../utils/date.calculate.js";
 import { getCachedSummary, setCacheSummary } from "./report.cache.js";
 
@@ -23,7 +23,7 @@ export interface IReportService {
   ) => Promise<GetExpenseReportByCategoryResponseDto>;
   getSummary: (
     userId: string,
-    thisMonthBudget: number,
+    query: GetSummaryQuery,
   ) => Promise<GetSummaryResponseDto>;
 }
 export class ReportService implements IReportService {
@@ -155,8 +155,13 @@ export class ReportService implements IReportService {
     };
   }
 
-  async getSummary(userId: string, thisMonthBudget: number) {
+  async getSummary(userId: string, query: GetSummaryQuery) {
     const { startOfMonth, startOfNextMonth } = getStartAndStartNextMonth();
+
+    const thisMonthBudget = parseInt(query.thisMonthBudget);
+    if (isNaN(thisMonthBudget)) {
+      throw new AppError("thisMonthBudget is invalid it must be number", 400);
+    }
 
     let reportSummary = await getCachedSummary(userId);
     if (reportSummary === null) {

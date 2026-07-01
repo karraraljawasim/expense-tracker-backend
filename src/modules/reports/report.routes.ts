@@ -4,7 +4,7 @@ import { ReportService } from "./report.service.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import {
   getMonthlyReportQuerySchema,
-  getSummaryBodySchema,
+  getSummaryQuerySchema,
 } from "./report.validation.js";
 import { categoryIdParamsSchema } from "../categories/category.validation.js";
 
@@ -27,4 +27,4 @@ reportRouter
 
 reportRouter
   .route("/summary")
-  .get(validate(getSummaryBodySchema), reportController.getSummary);
+  .get(validate(getSummaryQuerySchema, "query"), reportController.getSummary);

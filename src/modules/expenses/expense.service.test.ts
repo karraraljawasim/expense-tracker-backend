@@ -18,12 +18,12 @@ vi.mock("../users/user.model", () => ({
   },
 }));
 
-import { ExpenseService } from "../expenses/expense.service.js";
+import { ExpenseService } from "./expense.service.js";
 import { Types } from "mongoose";
 import { Categories } from "../categories/category.model.js";
 import {
   computeAmountInBaseCurrency,
-  createfilterObject,
+  createFilterObject,
 } from "../../helpers/expense.helper.js";
 import { calculateStartDateInMidnight } from "../../utils/date.calculate.js";
 
@@ -131,7 +131,7 @@ describe("ExpenseService.getAll", () => {
       categoryId: categoryId,
     };
 
-    const filterObject = createfilterObject(query, userId);
+    const filterObject = createFilterObject(query, userId);
     expect(filterObject).toHaveProperty("categoryId");
     expect(filterObject.date).toEqual({
       $gte: new Date("2026-05-01T00:00:00.000Z"),
@@ -139,7 +139,7 @@ describe("ExpenseService.getAll", () => {
     });
 
     try {
-      createfilterObject(query2, userId);
+      createFilterObject(query2, userId);
     } catch (error: any) {
       expect(error.message).toBe("(to) date must be greater than (from) date");
     }

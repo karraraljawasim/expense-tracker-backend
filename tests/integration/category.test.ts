@@ -1,11 +1,11 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { Types } from "mongoose";
 import request from "supertest";
-import { app } from "../helpers/testApp";
+import { app } from "../helpers/testApp.js";
 import {
   createAuthenticatedUser,
   createTestCategory,
-} from "../helpers/fixtures.ts";
+} from "../helpers/fixtures.js";
 
 let userId: Types.ObjectId;
 let token: string;
