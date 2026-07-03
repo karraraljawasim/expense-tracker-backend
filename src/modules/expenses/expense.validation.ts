@@ -2,23 +2,55 @@ import { z } from "zod";
 import { Types } from "mongoose";
 
 export const recurrenceSchema = z.object({
-  frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
-  interval: z.number().min(1, "Min interval is 1"),
-  startDate: z.string(),
-  endDate: z.string().nullable().default(null),
+  frequency: z
+    .enum(["daily", "weekly", "monthly", "yearly"])
+    .openapi({ description: "Type of frequency" }),
+  interval: z
+    .number()
+    .min(1, "Min interval is 1")
+    .openapi({ description: "Number of interval" }),
+  startDate: z.string().openapi({ description: "Start date of recurrence" }),
+  endDate: z
+    .string()
+    .nullable()
+    .default(null)
+    .openapi({ description: "End date of recurrence" }),
 });
 
 export const createExpenseSchema = z.object({
-  categoryId: z.string().refine((value) => Types.ObjectId.isValid(value), {
-    message: "Invalid object id",
-  }),
-  amount: z.number().min(0, "Amount must be greater than 0"),
-  currency: z.string().optional().default("USD"),
-  note: z.string().max(500, "Too long note").nullable().default(null),
-  date: z.string(),
-  isRecurring: z.boolean().optional().default(false),
+  categoryId: z
+    .string()
+    .refine((value) => Types.ObjectId.isValid(value), {
+      message: "Invalid object id",
+    })
+    .openapi({ description: "Category ID belong to the same user" }),
+  amount: z
+    .number()
+    .min(0, "Amount must be greater than 0")
+    .openapi({ description: "Spend amount" }),
+  currency: z
+    .string()
+    .optional()
+    .default("USD")
+    .openapi({ description: "Currency" }),
+  note: z
+    .string()
+    .max(500, "Too long note")
+    .nullable()
+    .default(null)
+    .openapi({ description: "Note for expense" }),
+  date: z.string().openapi({ description: "Date of expense" }),
+  isRecurring: z
+    .boolean()
+    .optional()
+    .default(false)
+    .openapi({ description: "Is expense recurring" }),
   recurrence: recurrenceSchema.nullable().default(null),
-  attachmentUrl: z.string().nullable().default(null),
+  attachmentUrl: z
+    .string()
+    .nullable()
+    .default(null)
+    .openapi({ description: "AttachmentUrl for expense" }),
 });
 
 export const getAllExpensesQuerySchema = z.object({
@@ -36,7 +68,8 @@ export const getAllExpensesQuerySchema = z.object({
         1,
       );
       return startOfCurrentMonth.toISOString().slice(0, 7);
-    }),
+    })
+    .openapi({ description: "Start date" }),
   to: z
     .string()
     .regex(/^\d{4}-\d{2}$/, {
@@ -51,44 +84,78 @@ export const getAllExpensesQuerySchema = z.object({
         1,
       );
       return startOfNextMonth.toISOString().slice(0, 7);
-    }),
+    })
+    .openapi({ description: "End date" }),
   categoryId: z
     .string()
     .refine((value) => Types.ObjectId.isValid(value), {
       message: "Invalid object id",
     })
-    .optional(),
-  currency: z.string().max(3).optional(),
+    .optional()
+    .openapi({ description: "Category ID" }),
+  currency: z.string().max(3).optional().openapi({ description: "Currency" }),
   isRecurring: z
     .preprocess((value) => value === "true" || value === true, z.boolean())
-    .optional(),
-  minAmount: z.coerce.number().optional(),
-  maxAmount: z.coerce.number().optional(),
-  page: z.string().optional().default("1"),
-  pageSize: z.string().optional().default("10"),
+    .optional()
+    .openapi({ description: "Is expense recurring" }),
+  minAmount: z.coerce
+    .number()
+    .optional()
+    .openapi({ description: "Min amount" }),
+  maxAmount: z.coerce
+    .number()
+    .optional()
+    .openapi({ description: "Max amount" }),
+  page: z
+    .string()
+    .optional()
+    .default("1")
+    .openapi({ description: "Number of page" }),
+  pageSize: z
+    .string()
+    .optional()
+    .default("10")
+    .openapi({ description: "Number of limit" }),
 });
 
 export const expenseIdPramsSchema = z.object({
-  expenseId: z.string().refine((value) => Types.ObjectId.isValid(value), {
-    message: "Invalid object id",
-  }),
+  expenseId: z
+    .string()
+    .refine((value) => Types.ObjectId.isValid(value), {
+      message: "Invalid object id",
+    })
+    .openapi({ description: "Unique mongoose ID for expense" }),
 });
 
 export const updateExpenseSchema = z.object({
-  amount: z.number().optional(),
-  currency: z.string().max(3).optional(),
+  amount: z.number().optional().openapi({ description: "New amount" }),
+  currency: z
+    .string()
+    .max(3)
+    .optional()
+    .openapi({ description: "New Currency" }),
   categoryId: z
     .string()
     .refine((value) => Types.ObjectId.isValid(value))
-    .optional(),
-  note: z.string().optional(),
-  date: z.string().optional(),
-  attachmentUrl: z.string().optional(),
-  editScope: z.enum(["all", "thisAndFuture", "this"]).optional(),
+    .optional()
+    .openapi({ description: "New category ID" }),
+  note: z.string().optional().openapi({ description: "New note for expense" }),
+  date: z.string().optional().openapi({ description: "New date of expense" }),
+  attachmentUrl: z
+    .string()
+    .optional()
+    .openapi({ description: "New attachmentUrl for expense" }),
+  editScope: z
+    .enum(["all", "thisAndFuture", "this"])
+    .optional()
+    .openapi({ description: "Edit scope for expense" }),
 });
 
 export const expenseSoftDeleteQuerySchema = z.object({
-  deleteScope: z.enum(["all", "this", "thisAndFuture"]).optional(),
+  deleteScope: z
+    .enum(["all", "this", "thisAndFuture"])
+    .optional()
+    .openapi({ description: "Delete scope for expense" }),
 });
 
 export type CreateExpenseRequestDto = z.infer<typeof createExpenseSchema>;

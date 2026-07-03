@@ -106,7 +106,7 @@ export function computeAmountInBaseCurrency(
   return amount * exchangeRate;
 }
 
-export function createfilterObject(
+export function createFilterObject(
   query: GetAllExpensesQueryDto,
   userId: string,
 ) {
@@ -136,7 +136,7 @@ export function createfilterObject(
   if (query.isRecurring !== undefined) {
     filterObject.isRecurring = query.isRecurring;
 
-    if (query.isRecurring === true) {
+    if (query.isRecurring) {
       filterObject["recurrence.parentId"] = null;
     }
   }

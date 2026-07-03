@@ -96,7 +96,7 @@ describe("Test registration functionality", () => {
 
     const refreshToken = refreshTokenCookies?.split(";")[0]?.split("=")[1];
 
-    const verifyRefreshToken = jwtUtils.verifyRefreshToken(refreshToken);
+    const verifyRefreshToken = jwtUtils.verifyRefreshToken(refreshToken!);
     const verifyAccessToken = jwtUtils.verifyAccessToken(accessToken);
 
     expect(verifyAccessToken.sub).toBeDefined();

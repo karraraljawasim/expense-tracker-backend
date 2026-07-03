@@ -8,6 +8,8 @@ services:
     env_file:
       - .env.development.local
 
+    environment:
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
 
@@ -20,5 +22,15 @@ services:
     volumes:
       - redis-data:/data
 
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    profiles:
+      - local-db
+
 volumes:
   redis-data:
+  mongo-data:

@@ -29,7 +29,7 @@ categoryRouter
     validate(categoryIdParamsSchema, "params"),
     categoryController.updateById,
   )
-  .delete(
+  .put(
     validate(categoryIdParamsSchema, "params"),
     categoryController.deleteById,
   );

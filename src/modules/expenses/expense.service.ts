@@ -8,7 +8,7 @@ import {
 import {
   checkBudgetAlert,
   computeAmountInBaseCurrency,
-  createfilterObject,
+  createFilterObject,
 } from "../../helpers/expense.helper.js";
 import { Categories } from "../categories/category.model.js";
 import { Expense } from "./expense.model.js";
@@ -88,7 +88,7 @@ export class ExpenseService implements IExpenseService {
         }
       }
       if (input.recurrence.interval < 1) {
-        throw new AppError("Interval must be 1 or more");
+        throw new AppError("Interval must be 1 or more", 400);
       }
 
       newExpense = await Expense.create({
@@ -129,7 +129,7 @@ export class ExpenseService implements IExpenseService {
       }
     }
 
-    const filterObject: IGetAllExpensesFilter = createfilterObject(
+    const filterObject: IGetAllExpensesFilter = createFilterObject(
       query,
       userId,
     );
@@ -235,7 +235,7 @@ export class ExpenseService implements IExpenseService {
     }
 
     if (
-      expense.isRecurring === false &&
+      !expense.isRecurring &&
       expense.recurrence?.parentId === null &&
       input.editScope === undefined
     ) {
@@ -423,10 +423,7 @@ export class ExpenseService implements IExpenseService {
     if (expense.isDeleted) {
       throw new GoneError("Expense");
     }
-    if (
-      expense.isRecurring === false &&
-      expense.recurrence?.parentId === null
-    ) {
+    if (!expense.isRecurring && expense.recurrence?.parentId === null) {
       await Expense.findByIdAndUpdate(expenseId, {
         isDeleted: true,
       });

@@ -30,7 +30,7 @@ export class ConflictError extends AppError {
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = `You don't have permission to access this resource. `) {
+  constructor(message = `You don't have permission to access this resource.`) {
     super(message, 403);
   }
 }

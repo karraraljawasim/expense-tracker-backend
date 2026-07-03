@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { IReportService } from "./report.service.js";
-import { getMonthlyReportQuerySchema } from "./report.validation.js";
+import {
+  getMonthlyReportQuerySchema,
+  getSummaryQuerySchema,
+} from "./report.validation.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 
 export class ReportController {
@@ -33,10 +36,8 @@ export class ReportController {
   });
 
   getSummary = asyncHandler(async (req, res) => {
-    const data = await this.#ReportService.getSummary(
-      req.user!.id,
-      req.body.thisMonthBudget,
-    );
+    const query = req.validateQuery as z.infer<typeof getSummaryQuerySchema>;
+    const data = await this.#ReportService.getSummary(req.user!.id, query);
 
     ApiResponse.success(res, data);
   });
