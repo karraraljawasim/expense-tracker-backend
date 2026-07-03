@@ -8,9 +8,10 @@ A backend service for tracking expenses, managing budget categories, and generat
 * [Tech Stack](#tech-stack)
 * [Project Structure](#project-structure)
 * [Getting Started](#getting-started)
-   * [Prerequisites](#prerequisites)
-   * [Installation](#installation)
+    * [Prerequisites](#prerequisites)
+    * [Installation](#installation)
 * [Running with Docker](#running-with-docker)
+* [Troubleshooting](#troubleshooting)
 * [API Routes](#api-routes)
 * [Full Interactive API Documentation](#full-interactive-api-documentation)
 * [Testing](#testing)
@@ -106,6 +107,11 @@ docker compose up --build
 docker compose --profile local-db up --build
 ```
 *Set `DB_URL` in `.env.development.local` to `mongodb://mongo:27017/expense_tracker_api`.*
+
+## Troubleshooting
+
+**MongoDB `querySrv ECONNREFUSED`:** some networks block the DNS SRV lookup used by `mongodb+srv://` connection strings. If you hit this, use the non-SRV connection string instead in Atlas, choose the standard driver connection string with the shard hosts listed directly (see `.env.example`), rather than the `mongodb+srv://` one.
+
 
 ## API Routes
 
